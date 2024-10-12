@@ -11,7 +11,7 @@ class Song extends Model
     use HasFactory;
 
     public function artists() : BelongsToMany {
-        return $this->belongsToMany(Artist::class, 'song_artist')->withPivot('order');
+        return $this->belongsToMany(Artist::class, 'song_artist')->orderBy('order');
     }
 
     public function charts() : BelongsToMany {

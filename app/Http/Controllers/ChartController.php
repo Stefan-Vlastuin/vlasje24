@@ -3,14 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Chart;
-use Illuminate\View\View;
+use Illuminate\Http\JsonResponse;
 
 class ChartController extends Controller
 {
-    public function show(string $id): View
+    public function getData(string $id): JsonResponse
     {
-        return view('chart.show', [
-            'chart' => Chart::findOrFail($id)
-        ]);
+        $chart = Chart::with('songs.artists')->findOrFail($id);
+        return response()->json($chart);
     }
 }

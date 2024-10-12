@@ -22,6 +22,6 @@ class Chart extends Model
     ];
 
     public function songs() : BelongsToMany {
-        return $this->belongsToMany(Song::class, 'chart_song')->withPivot('order');
+        return $this->belongsToMany(Song::class, 'chart_song')->orderby('order');
     }
 }
