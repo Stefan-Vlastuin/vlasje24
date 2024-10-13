@@ -13,4 +13,4 @@ Route::get('/chart/{id}', [ChartController::class, 'getData']);
 
 Route::get('/song/{id}', [SongController::class, 'getData']);
 
-Route::get('/artist/{id}', [ArtistController::class, 'getData']);
+Route::get('/artist/{id}', [ArtistController::class, 'show']);

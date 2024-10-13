@@ -32,5 +32,15 @@ services:
     ports:
       - "3306:3306"
 
+  npm:
+    image: node:20.18-alpine
+    container_name: npm
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+    tty: true
+    ports:
+      - "8081:8081"
+
 volumes:
   db_data:
