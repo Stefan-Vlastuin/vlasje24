@@ -6,13 +6,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
-/**
- * App\Models\Chart
- *
- * @property int $id
- *
- * @mixin \Illuminate\Database\Eloquent\Model
- */
 class Chart extends Model
 {
     use HasFactory;
@@ -22,6 +15,6 @@ class Chart extends Model
     ];
 
     public function songs() : BelongsToMany {
-        return $this->belongsToMany(Song::class, 'chart_song')->orderby('order');
+        return $this->belongsToMany(Song::class, 'chart_song')->orderby('order')->withTimestamps();
     }
 }
