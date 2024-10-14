@@ -2,11 +2,13 @@ services:
   app:
     build:
       context: .
-      dockerfile: ./docker/Dockerfile
+      dockerfile: docker/backend/Dockerfile
+    env_file:
+      - .env
     container_name: app
-    working_dir: /var/www
     volumes:
       - ./:/var/www
+      - /var/www/vendor/
 
   webserver:
     image: nginx:alpine
@@ -33,11 +35,13 @@ services:
       - "3306:3306"
 
   npm:
-    image: node:20.18-alpine
+    build:
+      context: .
+      dockerfile: docker/frontend/Dockerfile
     container_name: npm
-    working_dir: /var/www
     volumes:
       - ./:/var/www
+      - /var/www/node_modules
     tty: true
     ports:
       - "8081:8081"
