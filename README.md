@@ -11,10 +11,10 @@
     ```
 4. Generate a key for Artisan.
     ```shell
-    docker container exec app php artisan key:generate
+    docker compose exec app php artisan key:generate
     ```
 5. Start the Vite development server.
     ```shell
-    docker container exec npm npm run dev
+    docker compose exec npm npm run dev
     ```
 6. Visit the website at <http://localhost:8000/>.
