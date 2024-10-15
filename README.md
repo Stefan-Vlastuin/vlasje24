@@ -17,4 +17,8 @@
     ```shell
     docker compose exec npm npm run dev
     ```
+6. Create and fill the database tables.
+    ```shell
+   docker compose exec app php artisan migrate --seed
+   ```
 6. Visit the website at <http://localhost:8000/>.
