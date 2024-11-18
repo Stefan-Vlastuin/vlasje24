@@ -8,6 +8,8 @@
 h1 {
     text-align: center;
     color: #333;
+    font-size: 36px;
+    margin-bottom: 20px;
 }
 
 .song-list {
@@ -16,45 +18,76 @@ h1 {
 }
 
 .song-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     background-color: #f9f9f9;
     border: 1px solid #ddd;
-    padding: 15px;
-    margin-bottom: 10px;
+    padding: 20px;
+    margin-bottom: 15px;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    display: block;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    gap: 20px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.song-item:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .song-number {
-    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: #007bff;
+    color: #fff;
+    font-size: 22px;
     font-weight: bold;
-    margin-right: 10px;
-    color: #555;
-    display: inline-block;
+    flex-shrink: 0;
+}
+
+.song-image {
+    width: 90px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.song-details {
+    flex-grow: 1;
 }
 
 .song-title {
-    font-size: 18px;
+    font-size: 22px;
     font-weight: bold;
     color: #007bff;
-    display: inline-block;
+    text-decoration: none;
+    margin-bottom: 8px;
+    display: block;
 }
 
 .song-artists {
-    margin-top: 5px;
-    font-size: 14px;
-    color: #555;
-    display: block;  /* Ensure the artists appear below the title */
-}
-
-.song-title {
     font-size: 18px;
-    font-weight: bold;
-    color: #007bff;
-    display: inline-block;
-    text-decoration: none;
+    color: #555;
+    margin-top: 5px;
 }
 
-.song-title:hover {
-    text-decoration: underline;  /* Add underline on hover to indicate it's clickable */
+.play-button {
+    padding: 12px 18px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.play-button:hover {
+    background-color: #0056b3;
 }

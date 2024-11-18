@@ -30,7 +30,10 @@ class DatabaseSeeder extends Seeder
         ]);
 
         /** @var Song $song1 */
-        $song1 = Song::factory()->create(['title' => 'Snap']);
+        $song1 = Song::factory()->create(['title' => 'Snap',
+            'image_url' => 'https://is3-ssl.mzstatic.com/image/thumb/Music112/v4/c3/e5/09/c3e5099c-2017-aa33-c9e2-9723ba01dcf1/196589359971.jpg/100x100bb.jpg',
+            'preview_url' => 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview112/v4/f3/d8/1c/f3d81cac-8f6f-efed-361e-45ddee8de2bb/mzaf_12570303155148856656.plus.aac.p.m4a'
+        ]);
         $song1->artists()->attach($artists[0]->id, ['order' => 1]);
 
         /** @var Song $song2 */

@@ -3,23 +3,25 @@ import { Link } from '@inertiajs/inertia-react'
 import '../../css/chart.css';
 
 const Chart = ({ chart }) => {
-    // if (!chart) {
-    //     return <div>Loading chart...</div>;
-    // }
-
     return (
         <div className="chart-page">
-            <h1>Top Songs Chart</h1>
+            <h1>Vlasje24</h1>
             <ul className="song-list">
                 {chart.songs.map((song, index) => (
                     <li key={song.id} className="song-item">
-                        <div className="song-number">{index + 1}.</div>
-                        <Link href={`/song/${song.id}`} className="song-title">
-                            {song.title}
-                        </Link>
-                        <div className="song-artists">
-                            by {song.artists.map(artist => artist.name).join(", ")}
+                        <div className="song-number">{index + 1}</div>
+                        <img src={song.image_url} alt={song.title} className="song-image"/>
+                        <div className="song-details">
+                            <Link href={`/song/${song.id}`} className="song-title">
+                                {song.title}
+                            </Link>
+                            <div className="song-artists">
+                                {song.artists.map(artist => artist.name).join(", ")}
+                            </div>
                         </div>
+                        <button onClick={() => playSong(song.preview_url)} className="play-button">
+                            ▶ Play
+                        </button>
                     </li>
                 ))}
             </ul>
