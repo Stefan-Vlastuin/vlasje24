@@ -8,7 +8,6 @@ services:
     container_name: app
     volumes:
       - ./:/var/www
-      - /var/www/vendor/
 
   webserver:
     image: nginx:alpine
@@ -41,7 +40,6 @@ services:
     container_name: npm
     volumes:
       - ./:/var/www
-      - /var/www/node_modules
     tty: true
     ports:
       - "8081:8081"
