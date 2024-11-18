@@ -9,8 +9,8 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/chart/{id}', [ChartController::class, 'getData']);
+Route::get('/chart/{id}', [ChartController::class, 'show']);
 
-Route::get('/song/{id}', [SongController::class, 'getData']);
+Route::get('/song/{id}', [SongController::class, 'show']);
 
 Route::get('/artist/{id}', [ArtistController::class, 'show']);

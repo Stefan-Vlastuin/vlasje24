@@ -3,13 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Chart;
-use Illuminate\Http\JsonResponse;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class ChartController extends Controller
 {
-    public function getData(string $id): JsonResponse
+    public function show(string $id): Response
     {
-        $chart = Chart::with('songs.artists')->findOrFail($id);
-        return response()->json($chart);
+        return Inertia::render('Chart', [
+            'chart' => Chart::with('songs.artists')->findOrFail($id)
+        ]);
     }
 }

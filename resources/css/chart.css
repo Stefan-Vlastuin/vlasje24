@@ -1,0 +1,60 @@
+.chart-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+}
+
+.song-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+.song-item {
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: block;
+}
+
+.song-number {
+    font-size: 18px;
+    font-weight: bold;
+    margin-right: 10px;
+    color: #555;
+    display: inline-block;
+}
+
+.song-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #007bff;
+    display: inline-block;
+}
+
+.song-artists {
+    margin-top: 5px;
+    font-size: 14px;
+    color: #555;
+    display: block;  /* Ensure the artists appear below the title */
+}
+
+.song-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #007bff;
+    display: inline-block;
+    text-decoration: none;
+}
+
+.song-title:hover {
+    text-decoration: underline;  /* Add underline on hover to indicate it's clickable */
+}
