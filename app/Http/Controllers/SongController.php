@@ -3,14 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Song;
-use Illuminate\Http\JsonResponse;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class SongController extends Controller
 {
-    public function getData(string $id): JsonResponse
+    public function show(string $id): Response
     {
-        $song = Song::with('artists')->findOrFail($id);
-        return response()->json($song);
+        return Inertia::render('Song', [
+            'song' => Song::with('artists')->findOrFail($id)
+        ]);
     }
 }
 
