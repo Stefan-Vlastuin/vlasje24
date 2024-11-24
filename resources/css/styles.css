@@ -80,6 +80,13 @@ h1 {
     margin-top: 5px;
 }
 
+.artist-link {
+    text-decoration: none; /* Remove underline */
+    color: inherit; /* Inherit color from the surrounding text */
+    font-weight: normal; /* Keep the font weight consistent with the rest of the text */
+    cursor: pointer; /* Show a pointer cursor to indicate it's clickable */
+}
+
 .play-button {
     padding: 12px 18px;
     background-color: #007bff;

@@ -1,6 +1,7 @@
 import React from 'react';
 import '../../css/styles.css';
 import useAudioPlayer from "../hooks/useAudioPlayer.js";
+import {Link} from "@inertiajs/react";
 
 const Song = ({ song }) => {
     const { isPlaying, togglePlay } = useAudioPlayer(song.preview_url);
@@ -15,14 +16,16 @@ const Song = ({ song }) => {
                 />
                 <div className="song-details">
                     <h1 className="song-title">{song.title}</h1>
-                    <p className="song-artists">
-                        {song.artists.map((artist, index) => (
-                            <span key={index}>
-                                {artist.name}
-                                {index < song.artists.length - 1 && ', '}
+                    <div className="song-artists">
+                        {song.artists.map(artist => (
+                            <span key={artist.id}>
+                                <Link href={`/artist/${artist.id}`} className="artist-link">
+                                    {artist.name}
+                                </Link>
+                                {song.artists.indexOf(artist) !== song.artists.length - 1 && ", "}
                             </span>
                         ))}
-                    </p>
+                    </div>
                 </div>
                 <button
                     className="play-button"

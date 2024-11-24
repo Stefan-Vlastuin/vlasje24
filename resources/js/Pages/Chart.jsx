@@ -19,7 +19,14 @@ const Chart = ({ chart }) => {
                                     {song.title}
                                 </Link>
                                 <div className="song-artists">
-                                    {song.artists.map(artist => artist.name).join(", ")}
+                                    {song.artists.map(artist => (
+                                        <span key={artist.id}>
+                                            <Link href={`/artist/${artist.id}`} className="artist-link">
+                                                {artist.name}
+                                            </Link>
+                                            {song.artists.indexOf(artist) !== song.artists.length - 1 && ", "}
+                                        </span>
+                                    ))}
                                 </div>
                             </div>
                             <button onClick={togglePlay} className="play-button">
