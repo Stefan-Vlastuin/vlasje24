@@ -1,13 +1,22 @@
-.song-page {
+/* Shared styles for both the chart and song page */
+.page-container {
     max-width: 800px;
     margin: 0 auto;
     padding: 20px;
     font-family: Arial, sans-serif;
-    background: linear-gradient(135deg, #007bff 30%, #0056b3 100%);
-    border-radius: 10px;
-    color: #fff;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+h1 {
     text-align: center;
+    color: #333;
+    font-size: 36px;
+    margin-bottom: 20px;
+}
+
+.song-list {
+    list-style-type: none; /* Removes default list bullets */
+    padding: 0; /* Removes default padding */
+    margin: 0; /* Optional: Removes default margin for the list */
 }
 
 .song-container {
@@ -17,12 +26,11 @@
     background-color: #f9f9f9;
     border: 1px solid #ddd;
     padding: 20px;
-    margin-top: 20px;
+    margin-bottom: 15px;
     border-radius: 8px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     gap: 20px;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    color: #333;
 }
 
 .song-container:hover {
@@ -45,8 +53,8 @@
 }
 
 .song-image {
-    width: 100px;
-    height: 100px;
+    width: 90px;
+    height: 90px;
     object-fit: cover;
     border-radius: 8px;
     flex-shrink: 0;
@@ -54,21 +62,22 @@
 
 .song-details {
     flex-grow: 1;
-    text-align: left;
 }
 
 .song-title {
-    font-size: 26px;
+    font-size: 22px;
     font-weight: bold;
     color: #007bff;
     text-decoration: none;
     margin-bottom: 8px;
     display: block;
+    text-align: left;
 }
 
 .song-artists {
     font-size: 18px;
     color: #555;
+    margin-top: 5px;
 }
 
 .play-button {

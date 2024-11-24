@@ -1,14 +1,14 @@
 import React from 'react';
 import {Link} from "@inertiajs/react";
-import '../../css/chart.css';
+import '../../css/styles.css';
 
 const Chart = ({ chart }) => {
     return (
-        <div className="chart-page">
+        <div className="page-container">
             <h1>Vlasje24</h1>
             <ul className="song-list">
                 {chart.songs.map((song, index) => (
-                    <li key={song.id} className="song-item">
+                    <li key={song.id} className="song-container">
                         <div className="song-number">{index + 1}</div>
                         <img src={song.image_url} alt={song.title} className="song-image"/>
                         <div className="song-details">

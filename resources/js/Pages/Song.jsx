@@ -1,14 +1,10 @@
 import React from 'react';
-import '../../css/song.css';
+import '../../css/styles.css';
 
 const Song = ({ song }) => {
     return (
-        <div className="song-page">
+        <div className="page-container">
             <div className="song-container">
-                <div className="song-number">
-                    {/* Show a static or dynamic number if relevant */}
-                    1
-                </div>
                 <img
                     className="song-image"
                     src={song.image_url}
