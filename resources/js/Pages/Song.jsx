@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React from 'react';
 import '../../css/styles.css';
 import useAudioPlayer from "../hooks/useAudioPlayer.js";
 
