@@ -1,7 +1,10 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import '../../css/styles.css';
+import useAudioPlayer from "../hooks/useAudioPlayer.js";
 
 const Song = ({ song }) => {
+    const { isPlaying, togglePlay } = useAudioPlayer(song.preview_url);
+
     return (
         <div className="page-container">
             <div className="song-container">
@@ -23,9 +26,9 @@ const Song = ({ song }) => {
                 </div>
                 <button
                     className="play-button"
-                    onClick={() => window.open(song.preview_url, '_blank')}
+                    onClick={togglePlay}
                 >
-                    ▶ Play
+                    {isPlaying ? '\u23F8' : '\u25B6'}
                 </button>
             </div>
         </div>
