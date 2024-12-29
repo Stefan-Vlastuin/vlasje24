@@ -8,11 +8,10 @@ const Artist = ({ artist, songs }) => {
         <div className="page-container">
             <h1>{artist.name}</h1>
             <ul className="song-list">
-                {songs.map((song, index) => {
+                {songs.map(song => {
                     const { isPlaying, togglePlay } = useAudioPlayer(song.preview_url);
                     return (
                         <li key={song.id} className="song-container">
-                            <div className="song-number">{index + 1}</div>
                             <img src={song.image_url} alt={song.title} className="song-image" />
                             <div className="song-details">
                                 <Link href={`/song/${song.id}`} className="song-title">
