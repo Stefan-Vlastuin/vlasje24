@@ -10,8 +10,10 @@ class ArtistController extends Controller
 {
     public function show(string $id): Response
     {
+        $artist = Artist::with('songs')->findOrFail($id);
         return Inertia::render('Artist', [
-           'artist' => Artist::findOrFail($id)
+           'artist' => $artist,
+           'songs' => $artist->songs
         ]);
     }
 }
