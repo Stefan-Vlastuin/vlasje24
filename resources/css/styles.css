@@ -132,7 +132,6 @@ h1 {
 .chart-date {
     font-size: 24px;
     font-weight: bold;
-    margin-bottom: 20px;
     text-align: center;
 }
 
@@ -140,8 +139,7 @@ h1 {
 .navigation-button {
     font-size: 24px;
     padding: 10px 20px;
-    background-color: #007bff;
-    color: #fff;
+    color: #007bff;
     border: none;
     border-radius: 8px;
     cursor: pointer;
@@ -150,6 +148,14 @@ h1 {
     margin: 0 10px;
 }
 
-.navigation-button:hover {
-    background-color: #0056b3;
+.navigation-button.hidden {
+    visibility: hidden; /* Hides the button but keeps the space */
+    pointer-events: none; /* Prevents any interaction */
+}
+
+.chart-navigation {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
 }
