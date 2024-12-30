@@ -24,4 +24,8 @@ class Chart extends Model
     public function songs() : BelongsToMany {
         return $this->belongsToMany(Song::class, 'chart_song')->withPivot('order')->orderby('order')->withTimestamps();
     }
+
+    protected function serializeDate(\DateTimeInterface $date): string {
+        return $date->format('d-m-Y');
+    }
 }

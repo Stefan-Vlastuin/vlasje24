@@ -3,7 +3,7 @@ import { Link } from "@inertiajs/react";
 import '../../css/styles.css';
 import useAudioPlayer from "../hooks/useAudioPlayer.js";
 
-const Chart = ({ chart, previousChartId, nextChartId, chartDate }) => {
+const Chart = ({ chart, previousChartId, nextChartId }) => {
     return (
         <div className="page-container">
             <h1>Vlasje24</h1>
@@ -15,7 +15,7 @@ const Chart = ({ chart, previousChartId, nextChartId, chartDate }) => {
                 >
                     &#9664;
                 </Link>
-                <span className="chart-date">{chartDate}</span>
+                <span className="chart-date">{chart.date}</span>
                 <Link
                     href={nextChartId ? `/chart/${nextChartId}` : '#'}
                     className={`navigation-button ${!nextChartId ? 'hidden' : ''}`}

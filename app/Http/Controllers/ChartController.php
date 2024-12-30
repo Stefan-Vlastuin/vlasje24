@@ -38,8 +38,7 @@ class ChartController extends Controller
         return Inertia::render('Chart', [
             'chart' => $chart,
             'previousChartId' => $previousChart ? $previousChart->id : null,
-            'nextChartId' => $nextChart ? $nextChart->id : null,
-            'chartDate' => $chart->date->format('d-m-Y')
+            'nextChartId' => $nextChart ? $nextChart->id : null
         ]);
     }
 }
