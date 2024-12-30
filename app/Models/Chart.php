@@ -5,7 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Collection;
 
+/**
+ * @property int $id
+ * @property Collection $songs
+ */
 class Chart extends Model
 {
     use HasFactory;
@@ -15,6 +20,6 @@ class Chart extends Model
     ];
 
     public function songs() : BelongsToMany {
-        return $this->belongsToMany(Song::class, 'chart_song')->orderby('order')->withTimestamps();
+        return $this->belongsToMany(Song::class, 'chart_song')->withPivot('order')->orderby('order')->withTimestamps();
     }
 }

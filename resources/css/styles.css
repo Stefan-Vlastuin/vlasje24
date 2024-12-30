@@ -107,3 +107,23 @@ h1 {
     height: 300px;
     margin-top: 20px;
 }
+
+/* Styles for the increase/decrease arrows */
+.position-change {
+    font-size: 18px;
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.position-change.up {
+    color: green;
+}
+
+.position-change.down {
+    color: red;
+}
+
+/* Styles to highlight songs in their first week */
+.first-week {
+    background-color: #ffff00;
+}

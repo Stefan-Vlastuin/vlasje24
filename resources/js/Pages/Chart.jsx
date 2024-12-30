@@ -10,8 +10,10 @@ const Chart = ({ chart }) => {
             <ul className="song-list">
                 {chart.songs.map((song, index) => {
                     const {isPlaying, togglePlay} = useAudioPlayer(song.preview_url);
+                    const isFirstWeek = song.nr_of_weeks === 1;
+                    const positionChange = song.position_change;
                     return (
-                        <li key={song.id} className="song-container">
+                        <li key={song.id} className={`song-container ${isFirstWeek ? 'first-week' : ''}`}>
                             <div className="song-number">{index + 1}</div>
                             <img src={song.image_url} alt={song.title} className="song-image"/>
                             <div className="song-details">
@@ -28,6 +30,14 @@ const Chart = ({ chart }) => {
                                         </span>
                                     ))}
                                 </div>
+                            </div>
+                            <div className="song-weeks">
+                                {(positionChange !== null && positionChange !== 0) && (
+                                    <span className={`position-change ${positionChange > 0 ? 'up' : 'down'}`}>
+                                        {positionChange > 0 ? '↑' : '↓'} {Math.abs(positionChange)}
+                                    </span>
+                                )}
+                                <span className="weeks-in-chart">{song.nr_of_weeks} {song.nr_of_weeks === 1 ? 'week' : 'weeks'}</span>
                             </div>
                             <button onClick={togglePlay} className="play-button">
                                 {isPlaying ? '\u23F8' : '\u25B6'}
