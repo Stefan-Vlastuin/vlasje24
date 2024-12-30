@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -25,7 +26,7 @@ class Chart extends Model
         return $this->belongsToMany(Song::class, 'chart_song')->withPivot('order')->orderby('order')->withTimestamps();
     }
 
-    protected function serializeDate(\DateTimeInterface $date): string {
+    protected function serializeDate(DateTimeInterface $date): string {
         return $date->format('d-m-Y');
     }
 }
