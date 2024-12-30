@@ -1,12 +1,29 @@
 import React from 'react';
-import {Link} from "@inertiajs/react";
+import { Link } from "@inertiajs/react";
 import '../../css/styles.css';
 import useAudioPlayer from "../hooks/useAudioPlayer.js";
 
-const Chart = ({ chart }) => {
+const Chart = ({ chart, previousChartId, nextChartId }) => {
     return (
         <div className="page-container">
             <h1>Vlasje24</h1>
+            <div className="chart-navigation">
+                <Link
+                    href={previousChartId ? `/chart/${previousChartId}` : '#'}
+                    className={`navigation-button ${!previousChartId ? 'hidden' : ''}`}
+                    aria-disabled={!previousChartId}
+                >
+                    &#9664;
+                </Link>
+                <span className="chart-date">{chart.date}</span>
+                <Link
+                    href={nextChartId ? `/chart/${nextChartId}` : '#'}
+                    className={`navigation-button ${!nextChartId ? 'hidden' : ''}`}
+                    aria-disabled={!nextChartId}
+                >
+                    &#9654;
+                </Link>
+            </div>
             <ul className="song-list">
                 {chart.songs.map((song, index) => {
                     const {isPlaying, togglePlay} = useAudioPlayer(song.preview_url);
@@ -37,7 +54,8 @@ const Chart = ({ chart }) => {
                                         {positionChange > 0 ? '↑' : '↓'} {Math.abs(positionChange)}
                                     </span>
                                 )}
-                                <span className="weeks-in-chart">{song.nr_of_weeks} {song.nr_of_weeks === 1 ? 'week' : 'weeks'}</span>
+                                <span
+                                    className="weeks-in-chart">{song.nr_of_weeks} {song.nr_of_weeks === 1 ? 'week' : 'weeks'}</span>
                             </div>
                             <button onClick={togglePlay} className="play-button">
                                 {isPlaying ? '\u23F8' : '\u25B6'}

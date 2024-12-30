@@ -17,6 +17,9 @@ class ChartController extends Controller
         /** @var Chart|null $previousChart */
         $previousChart = Chart::with('songs')->find(((int) $id) - 1);
 
+        /** @var Chart|null $nextChart */
+        $nextChart = Chart::with('songs')->find(((int) $id) + 1);
+
         $chart->songs->each(function (Song $song) use ($previousChart, $chart) {
             if ($previousChart) {
                 $previousSong = $previousChart->songs->firstWhere('id', $song->id);
@@ -33,7 +36,9 @@ class ChartController extends Controller
         });
 
         return Inertia::render('Chart', [
-            'chart' => $chart
+            'chart' => $chart,
+            'previousChartId' => $previousChart ? $previousChart->id : null,
+            'nextChartId' => $nextChart ? $nextChart->id : null
         ]);
     }
 }

@@ -127,3 +127,35 @@ h1 {
 .first-week {
     background-color: #ffff00;
 }
+
+/* Styles for the chart date */
+.chart-date {
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+}
+
+/* Styles for the navigation buttons */
+.navigation-button {
+    font-size: 24px;
+    padding: 10px 20px;
+    color: #007bff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    margin: 0 10px;
+}
+
+.navigation-button.hidden {
+    visibility: hidden; /* Hides the button but keeps the space */
+    pointer-events: none; /* Prevents any interaction */
+}
+
+.chart-navigation {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+}
