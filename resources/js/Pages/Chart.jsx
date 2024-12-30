@@ -9,13 +9,13 @@ const Chart = ({ chart, previousChartId, nextChartId, chartDate }) => {
             <div className="chart-navigation">
                 {previousChartId && (
                     <Link href={`/chart/${previousChartId}`} className="navigation-button">
-                        &lt;
+                        &#9664;
                     </Link>
                 )}
                 <span className="chart-date">{chartDate}</span>
                 {nextChartId && (
                     <Link href={`/chart/${nextChartId}`} className="navigation-button">
-                        &gt;
+                        &#9654;
                     </Link>
                 )}
             </div>
