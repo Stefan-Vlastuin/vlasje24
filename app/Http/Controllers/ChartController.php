@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Chart;
+use App\Models\Song;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -10,16 +11,25 @@ class ChartController extends Controller
 {
     public function show(string $id): Response
     {
+        /** @var Chart $chart */
         $chart = Chart::with('songs.artists')->findOrFail($id);
 
-        $chart->songs->each(function ($song) use ($chart) {
-            $song->weeks_in_chart = $song->charts->count();
-            $previousChart = $song->charts->where('date', '<', $chart->date)->sortByDesc('date')->first();
+        /** @var Chart|null $previousChart */
+        $previousChart = Chart::with('songs')->find(((int) $id) - 1);
+
+        $chart->songs->each(function (Song $song) use ($previousChart, $chart) {
             if ($previousChart) {
-                $song->position_change = $previousChart->pivot->order - $song->pivot->order;
+                $previousSong = $previousChart->songs->firstWhere('id', $song->id);
+                $song->position_change = $previousSong
+                    ? $previousSong->pivot->order - $song->pivot->order
+                    : null;
             } else {
                 $song->position_change = null;
             }
+
+            $song->nr_of_weeks = $song->charts()
+                ->where('charts.id', '<=', $chart->id)
+                ->count();
         });
 
         return Inertia::render('Chart', [
