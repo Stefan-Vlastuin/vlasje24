@@ -30,14 +30,14 @@ const Chart = ({ chart }) => {
                                         </span>
                                     ))}
                                 </div>
-                                <div className="song-weeks">
-                                    {positionChange !== null && (
-                                        <span className={`position-change ${positionChange > 0 ? 'up' : 'down'}`}>
-                                            {positionChange > 0 ? '↑' : '↓'} {Math.abs(positionChange)}
-                                        </span>
-                                    )}
-                                    <span className="weeks-in-chart">{song.weeks_in_chart} weeks</span>
-                                </div>
+                            </div>
+                            <div className="song-weeks">
+                                {positionChange !== null && (
+                                    <span className={`position-change ${positionChange > 0 ? 'up' : 'down'}`}>
+                                        {positionChange > 0 ? '↑' : '↓'} {Math.abs(positionChange)}
+                                    </span>
+                                )}
+                                <span className="weeks-in-chart">{song.weeks_in_chart} weeks</span>
                             </div>
                             <button onClick={togglePlay} className="play-button">
                                 {isPlaying ? '\u23F8' : '\u25B6'}
