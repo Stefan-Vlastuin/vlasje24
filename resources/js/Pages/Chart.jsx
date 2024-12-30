@@ -1,21 +1,34 @@
 import React from 'react';
-import {Link} from "@inertiajs/react";
+import { Link } from "@inertiajs/react";
 import '../../css/styles.css';
 import useAudioPlayer from "../hooks/useAudioPlayer.js";
 
-const Chart = ({ chart }) => {
+const Chart = ({ chart, previousChartId, nextChartId, chartDate }) => {
     return (
         <div className="page-container">
+            <div className="chart-navigation">
+                {previousChartId && (
+                    <Link href={`/chart/${previousChartId}`} className="navigation-button">
+                        &lt;
+                    </Link>
+                )}
+                <span className="chart-date">{chartDate}</span>
+                {nextChartId && (
+                    <Link href={`/chart/${nextChartId}`} className="navigation-button">
+                        &gt;
+                    </Link>
+                )}
+            </div>
             <h1>Vlasje24</h1>
             <ul className="song-list">
                 {chart.songs.map((song, index) => {
-                    const {isPlaying, togglePlay} = useAudioPlayer(song.preview_url);
+                    const { isPlaying, togglePlay } = useAudioPlayer(song.preview_url);
                     const isFirstWeek = song.nr_of_weeks === 1;
                     const positionChange = song.position_change;
                     return (
                         <li key={song.id} className={`song-container ${isFirstWeek ? 'first-week' : ''}`}>
                             <div className="song-number">{index + 1}</div>
-                            <img src={song.image_url} alt={song.title} className="song-image"/>
+                            <img src={song.image_url} alt={song.title} className="song-image" />
                             <div className="song-details">
                                 <Link href={`/song/${song.id}`} className="song-title">
                                     {song.title}
