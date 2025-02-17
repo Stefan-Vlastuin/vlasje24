@@ -33,6 +33,11 @@ class ChartController extends Controller
             $song->nr_of_weeks = $song->charts()
                 ->where('charts.id', '<=', $chart->id)
                 ->count();
+
+            // Fix the bug where selecting highest position shows the number of points
+            $song->highest_position = $song->charts()
+                ->where('charts.id', '<=', $chart->id)
+                ->min('chart_song.order');
         });
 
         return Inertia::render('Chart', [
