@@ -6,6 +6,7 @@ const Jaaroverzicht = ({ rankedSongs, rankedArtists, year, rankingType }) => {
     const [selectedRankingType, setSelectedRankingType] = useState(rankingType);
     const [displayType, setDisplayType] = useState('songs');
     const [showAll, setShowAll] = useState(false);
+    const [selectedYear, setSelectedYear] = useState(year);
 
     const handleRankingTypeChange = (event) => {
         setSelectedRankingType(event.target.value);
@@ -17,6 +18,10 @@ const Jaaroverzicht = ({ rankedSongs, rankedArtists, year, rankingType }) => {
 
     const handleShowAllClick = () => {
         setShowAll(true);
+    };
+
+    const handleYearChange = (event) => {
+        setSelectedYear(event.target.value);
     };
 
     const renderSongs = () => {
@@ -90,7 +95,7 @@ const Jaaroverzicht = ({ rankedSongs, rankedArtists, year, rankingType }) => {
 
     return (
         <div className="page-container">
-            <h1>Jaaroverzicht {year ? year : 'All-Time'}</h1>
+            <h1>Jaaroverzicht {selectedYear ? selectedYear : 'All-Time'}</h1>
             <div className="ranking-options">
                 <label>
                     <input
@@ -138,6 +143,19 @@ const Jaaroverzicht = ({ rankedSongs, rankedArtists, year, rankingType }) => {
                         onChange={handleDisplayTypeChange}
                     />
                     Artists
+                </label>
+            </div>
+            <div className="year-selection">
+                <label>
+                    Select Year:
+                    <select value={selectedYear} onChange={handleYearChange}>
+                        <option value="">All-Time</option>
+                        {/* Add options for each year dynamically */}
+                        {[...Array(50).keys()].map(i => {
+                            const year = 1970 + i;
+                            return <option key={year} value={year}>{year}</option>;
+                        })}
+                    </select>
                 </label>
             </div>
             {displayType === 'songs' ? renderSongs() : renderArtists()}

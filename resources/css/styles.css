@@ -251,3 +251,22 @@ h1 {
 .show-all-button:hover {
     background-color: #0056b3;
 }
+
+/* Styles for the year selection dropdown */
+.year-selection {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.year-selection label {
+    font-size: 18px;
+    margin-right: 10px;
+}
+
+.year-selection select {
+    font-size: 18px;
+    padding: 5px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
