@@ -3,7 +3,7 @@
 use App\Http\Controllers\ArtistController;
 use App\Http\Controllers\ChartController;
 use App\Http\Controllers\SongController;
-use App\Http\Controllers\JaaroverzichtController;
+use App\Http\Controllers\RankingController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -16,4 +16,4 @@ Route::get('/song/{id}', [SongController::class, 'show']);
 
 Route::get('/artist/{id}', [ArtistController::class, 'show']);
 
-Route::get('/jaaroverzicht', [JaaroverzichtController::class, 'index']);
+Route::get('/ranking', [RankingController::class, 'show']);

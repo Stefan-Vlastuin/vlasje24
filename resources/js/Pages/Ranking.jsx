@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from '@inertiajs/react';
 import '../../css/styles.css';
 
-const Jaaroverzicht = ({ rankedSongs, rankedArtists, year, rankingType }) => {
+const Ranking = ({ rankedSongs, rankedArtists, year, rankingType }) => {
     const [selectedRankingType, setSelectedRankingType] = useState(rankingType);
     const [displayType, setDisplayType] = useState('songs');
     const [showAll, setShowAll] = useState(false);
@@ -95,8 +95,17 @@ const Jaaroverzicht = ({ rankedSongs, rankedArtists, year, rankingType }) => {
 
     return (
         <div className="page-container">
-            <h1>Jaaroverzicht {selectedYear ? selectedYear : 'All-Time'}</h1>
+            <h1>Ranking {selectedYear ? selectedYear : 'All-Time'}</h1>
             <div className="ranking-options">
+                <label>
+                    <input
+                        type="radio"
+                        value="points"
+                        checked={selectedRankingType === 'points'}
+                        onChange={handleRankingTypeChange}
+                    />
+                    Number of Points
+                </label>
                 <label>
                     <input
                         type="radio"
@@ -115,17 +124,8 @@ const Jaaroverzicht = ({ rankedSongs, rankedArtists, year, rankingType }) => {
                     />
                     Highest Position
                 </label>
-                <label>
-                    <input
-                        type="radio"
-                        value="points"
-                        checked={selectedRankingType === 'points'}
-                        onChange={handleRankingTypeChange}
-                    />
-                    Number of Points
-                </label>
             </div>
-            <div className="display-options">
+            <div className="ranking-options">
                 <label>
                     <input
                         type="radio"
@@ -150,9 +150,9 @@ const Jaaroverzicht = ({ rankedSongs, rankedArtists, year, rankingType }) => {
                     Select Year:
                     <select value={selectedYear} onChange={handleYearChange}>
                         <option value="">All-Time</option>
-                        {/* Add options for each year dynamically */}
-                        {[...Array(50).keys()].map(i => {
-                            const year = 1970 + i;
+                        // TODO: retrieve possible years from backend
+                        {[...Array(4).keys()].map(i => {
+                            const year = 2022 + i;
                             return <option key={year} value={year}>{year}</option>;
                         })}
                     </select>
@@ -163,4 +163,4 @@ const Jaaroverzicht = ({ rankedSongs, rankedArtists, year, rankingType }) => {
     );
 };
 
-export default Jaaroverzicht;
+export default Ranking;
