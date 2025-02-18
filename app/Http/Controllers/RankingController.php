@@ -7,7 +7,6 @@ use App\Models\Chart;
 use App\Models\Song;
 use App\Models\Artist;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -27,8 +26,21 @@ class RankingController extends Controller
 
         $rankingType = Rankingtype::tryFrom($request->input('rankingType')) ?? RankingType::POINTS;
 
-        $songs = Song::with('charts', 'artists')->get();
-        $artists = Artist::with('songs.charts')->get();
+        $songs = Song::with('charts', 'artists')
+            ->when($year, function ($query, $year) {
+                $query->whereHas('charts', function ($q) use ($year) {
+                    $q->whereYear('date', $year);
+                });
+            })
+            ->get();
+
+        $artists = Artist::with('songs.charts')
+            ->when($year, function ($query, $year) {
+                $query->whereHas('songs.charts', function ($q) use ($year) {
+                    $q->whereYear('date', $year);
+                });
+            })
+            ->get();
 
         /** @var Song $song */
         foreach ($songs as $song) {

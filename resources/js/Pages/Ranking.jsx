@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import { Link } from '@inertiajs/react';
+import {Link, router} from '@inertiajs/react';
 import '../../css/styles.css';
 
 const Ranking = ({ songs, artists, year, rankingType, years }) => {
@@ -31,7 +31,8 @@ const Ranking = ({ songs, artists, year, rankingType, years }) => {
     };
 
     const handleYearChange = (event) => {
-        setSelectedYear(event.target.value);
+        const newYear = event.target.value;
+        router.visit(`/ranking/${newYear}`);
     };
 
     const rankingNumber = (songOrArtist) => {
@@ -195,7 +196,7 @@ const Ranking = ({ songs, artists, year, rankingType, years }) => {
                 <label>
                     Select Year:
                     <select value={selectedYear} onChange={handleYearChange}>
-                        <option value="">All-Time</option>
+                        <option key="all" value="all">All-Time</option>
                         {years.map(year => {
                             return <option key={year} value={year}>{year}</option>;
                         })}

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 /**
  * @property int $id
@@ -42,6 +43,12 @@ class Song extends Model
     private function filterCharts(?int $year) : Collection {
         return $this->charts->filter(function (Chart $chart) use ($year) {
             return $year === null || $chart->date->year === $year;
+        });
+    }
+
+    public function inYear(int $year) : bool {
+        return $this->charts->some(function (Chart $chart) use ($year) {
+            return $chart->date->year === $year;
         });
     }
 }

@@ -20,20 +20,30 @@ class Artist extends Model
     }
 
     public function getPoints(?int $year) : int {
-        return $this->songs->map(function (Song $song) use ($year) {
+        return $this->songsInYear($year)->map(function (Song $song) use ($year) {
             return $song->getPoints($year);
         })->sum();
     }
 
     public function getNrOfWeeks(?int $year) : int {
-        return $this->songs->map(function (Song $song) use ($year) {
+        return $this->songsInYear($year)->map(function (Song $song) use ($year) {
             return $song->getNrOfWeeks($year);
         })->sum();
     }
 
     public function getHighestPosition(?int $year) : int {
-        return $this->songs->map(function (Song $song) use ($year) {
+        return $this->songsInYear($year)->map(function (Song $song) use ($year) {
             return $song->getHighestPosition($year);
         })->min();
+    }
+
+    private function songsInYear(?int $year) : Collection {
+        if ($year === null) {
+            return $this->songs;
+        }
+
+        return $this->songs->filter(function (Song $song) use ($year) {
+            return $song->inYear($year);
+        });
     }
 }
