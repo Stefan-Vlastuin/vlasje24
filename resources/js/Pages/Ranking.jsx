@@ -1,9 +1,8 @@
 import React, {useEffect, useState} from 'react';
 import { Link } from '@inertiajs/react';
 import '../../css/styles.css';
-import song from "./Song.jsx";
 
-const Ranking = ({ songs, artists, year, rankingType }) => {
+const Ranking = ({ songs, artists, year, rankingType, years }) => {
     const [selectedRankingType, setSelectedRankingType] = useState(rankingType);
     const [displayType, setDisplayType] = useState('songs');
     const [showAll, setShowAll] = useState(false);
@@ -197,9 +196,7 @@ const Ranking = ({ songs, artists, year, rankingType }) => {
                     Select Year:
                     <select value={selectedYear} onChange={handleYearChange}>
                         <option value="">All-Time</option>
-                        // TODO: retrieve possible years from backend
-                        {[...Array(4).keys()].map(i => {
-                            const year = 2022 + i;
+                        {years.map(year => {
                             return <option key={year} value={year}>{year}</option>;
                         })}
                     </select>

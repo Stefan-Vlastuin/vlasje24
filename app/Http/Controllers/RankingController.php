@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\RankingType;
+use App\Models\Chart;
 use App\Models\Song;
 use App\Models\Artist;
 use Illuminate\Http\Request;
@@ -15,6 +16,15 @@ class RankingController extends Controller
     public function show(string $year, Request $request): Response
     {
         $year = $year === 'all' ? null : (int) $year;
+
+        $years = Chart::all()->map(function (Chart $chart) {
+            return $chart->date->year;
+        })->unique()->sort()->values();
+
+         if (isset($year) && !$years->contains($year)) {
+             $year = null;
+         }
+
         $rankingType = Rankingtype::tryFrom($request->input('rankingType')) ?? RankingType::POINTS;
 
         $songs = Song::with('charts', 'artists')->get();
@@ -38,7 +48,8 @@ class RankingController extends Controller
             'songs' => $songs,
             'artists' => $artists,
             'year' => $year,
-            'rankingType' => $rankingType
+            'rankingType' => $rankingType,
+            'years' => $years,
         ]);
     }
 }
