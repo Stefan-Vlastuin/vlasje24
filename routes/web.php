@@ -16,4 +16,4 @@ Route::get('/song/{id}', [SongController::class, 'show']);
 
 Route::get('/artist/{id}', [ArtistController::class, 'show']);
 
-Route::get('/ranking', [RankingController::class, 'show']);
+Route::get('/ranking/{year}', [RankingController::class, 'show']);

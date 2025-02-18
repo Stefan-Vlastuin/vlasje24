@@ -1,12 +1,23 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import { Link } from '@inertiajs/react';
 import '../../css/styles.css';
+import song from "./Song.jsx";
 
-const Ranking = ({ rankedSongs, rankedArtists, year, rankingType }) => {
+const Ranking = ({ songs, artists, year, rankingType }) => {
     const [selectedRankingType, setSelectedRankingType] = useState(rankingType);
     const [displayType, setDisplayType] = useState('songs');
     const [showAll, setShowAll] = useState(false);
     const [selectedYear, setSelectedYear] = useState(year);
+    const [sortedSongs, setSortedSongs] = useState([]);
+    const [sortedArtists, setSortedArtists] = useState([]);
+
+    useEffect(() => {
+        sortSongs();
+    }, [selectedRankingType, songs]);
+
+    useEffect(() => {
+        sortArtists();
+    }, [selectedRankingType, artists]);
 
     const handleRankingTypeChange = (event) => {
         setSelectedRankingType(event.target.value);
@@ -24,8 +35,44 @@ const Ranking = ({ rankedSongs, rankedArtists, year, rankingType }) => {
         setSelectedYear(event.target.value);
     };
 
+    const rankingNumber = (songOrArtist) => {
+        if (selectedRankingType === 'weeks') {
+            return songOrArtist.nrOfWeeks;
+        } else if (selectedRankingType === 'highest') {
+            return songOrArtist.highestPosition;
+        } else {
+            return songOrArtist.points;
+        }
+    }
+
+    const sortSongs = () => {
+        const sorted = [...songs].sort((a, b) => {
+            if (selectedRankingType === 'weeks') {
+                return b.nrOfWeeks - a.nrOfWeeks;
+            } else if (selectedRankingType === 'highest') {
+                return a.highestPosition - b.highestPosition;
+            } else {
+                return b.points - a.points;
+            }
+        });
+        setSortedSongs(sorted);
+    };
+
+    const sortArtists = () => {
+        const sorted = [...artists].sort((a, b) => {
+            if (selectedRankingType === 'weeks') {
+                return b.nrOfWeeks - a.nrOfWeeks;
+            } else if (selectedRankingType === 'highest') {
+                return a.highestPosition - b.highestPosition;
+            } else {
+                return b.points - a.points;
+            }
+        });
+        setSortedArtists(sorted);
+    };
+
     const renderSongs = () => {
-        const songsToShow = showAll ? rankedSongs : rankedSongs.slice(0, 3);
+        const songsToShow = showAll ? sortedSongs : sortedSongs.slice(0, 3);
         return (
             <>
                 <h2>Songs</h2>
@@ -50,7 +97,7 @@ const Ranking = ({ rankedSongs, rankedArtists, year, rankingType }) => {
                                 </div>
                             </div>
                             <div className="song-points">
-                                {song.points} {selectedRankingType === 'weeks' ? 'weeks' : 'points'}
+                                {rankingNumber(song)}
                             </div>
                         </li>
                     ))}
@@ -65,7 +112,7 @@ const Ranking = ({ rankedSongs, rankedArtists, year, rankingType }) => {
     };
 
     const renderArtists = () => {
-        const artistsToShow = showAll ? rankedArtists : rankedArtists.slice(0, 3);
+        const artistsToShow = showAll ? sortedArtists : sortedArtists.slice(0, 3);
         return (
             <>
                 <h2>Artists</h2>
@@ -79,7 +126,7 @@ const Ranking = ({ rankedSongs, rankedArtists, year, rankingType }) => {
                                 </Link>
                             </div>
                             <div className="artist-points">
-                                {artist.points} {selectedRankingType === 'weeks' ? 'weeks' : 'points'}
+                                {rankingNumber(artist)}
                             </div>
                         </li>
                     ))}
