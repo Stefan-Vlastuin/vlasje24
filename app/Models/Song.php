@@ -22,4 +22,32 @@ class Song extends Model
     public function charts() : BelongsToMany {
         return $this->belongsToMany(Chart::class, 'chart_song')->withPivot('order')->withTimestamps();
     }
+
+    public function getPoints(?int $year) : int {
+        return $this->filterCharts($year)->map(function (Chart $chart) {
+            return 25 - $chart->pivot->order;
+        })->sum();
+    }
+
+    public function getNrOfWeeks(?int $year) : int {
+        return $this->filterCharts($year)->count();
+    }
+
+    public function getHighestPosition(?int $year) : int {
+        return $this->filterCharts($year)->map(function (Chart $chart) {
+            return $chart->pivot->order;
+        })->min();
+    }
+
+    private function filterCharts(?int $year) : Collection {
+        return $this->charts->filter(function (Chart $chart) use ($year) {
+            return $year === null || $chart->date->year === $year;
+        });
+    }
+
+    public function inYear(int $year) : bool {
+        return $this->charts->some(function (Chart $chart) use ($year) {
+            return $chart->date->year === $year;
+        });
+    }
 }
