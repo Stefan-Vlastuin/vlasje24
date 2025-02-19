@@ -2,11 +2,13 @@ import React from 'react';
 import { Link } from "@inertiajs/react";
 import '../../css/styles.css';
 import useAudioPlayer from "../hooks/useAudioPlayer.js";
+import SearchBar from '../components/SearchBar.jsx';
 
 const Chart = ({ chart, previousChartId, nextChartId }) => {
     return (
         <div className="page-container">
             <h1>Vlasje24</h1>
+            <SearchBar />
             <div className="chart-navigation">
                 <Link
                     href={previousChartId ? `/chart/${previousChartId}` : '#'}
