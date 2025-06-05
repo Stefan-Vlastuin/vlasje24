@@ -1,15 +1,29 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from '@inertiajs/react';
 import useAudioPlayer from '../hooks/useAudioPlayer.js';
 import '../../css/styles.css';
 
 const Artist = ({ artist, songs }) => {
+    const [playingSongId, setPlayingSongId] = useState(null);
+
     return (
         <div className="page-container">
             <h1>{artist.name}</h1>
             <ul className="song-list">
                 {songs.map(song => {
-                    const { isPlaying, togglePlay } = useAudioPlayer(song.preview_url);
+                    const isGlobalPlaying = playingSongId === song.id;
+                    const { isPlaying, play, pause } = useAudioPlayer(song.preview_url, isGlobalPlaying);
+
+                    const handlePlayPause = () => {
+                        if (isGlobalPlaying) {
+                            setPlayingSongId(null);
+                            pause();
+                        } else {
+                            setPlayingSongId(song.id);
+                            play();
+                        }
+                    };
+
                     return (
                         <li key={song.id} className="song-container">
                             <img src={song.image_url} alt={song.title} className="song-image" />
@@ -28,8 +42,8 @@ const Artist = ({ artist, songs }) => {
                                     ))}
                                 </div>
                             </div>
-                            <button onClick={togglePlay} className="play-button">
-                                {isPlaying ? '\u23F8' : '\u25B6'}
+                            <button onClick={handlePlayPause} className="play-button">
+                                {isGlobalPlaying && isPlaying ? '\u23F8' : '\u25B6'}
                             </button>
                         </li>
                     );
