@@ -7,10 +7,7 @@ use App\Http\Controllers\RankingController;
 use App\Http\Controllers\SearchController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
-
+Route::get('/', [ChartController::class, 'redirectToLatest']);
 Route::get('/chart/{id}', [ChartController::class, 'show']);
 
 Route::get('/song/{id}', [SongController::class, 'show']);

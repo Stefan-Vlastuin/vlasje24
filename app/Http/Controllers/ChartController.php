@@ -6,9 +6,19 @@ use App\Models\Chart;
 use App\Models\Song;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Http\RedirectResponse;
 
 class ChartController extends Controller
 {
+    public function redirectToLatest(): RedirectResponse
+    {
+        $newestChart = Chart::orderByDesc('date')->first();
+        if ($newestChart) {
+            return redirect("/chart/{$newestChart->id}");
+        }
+        abort(404, 'No charts found');
+    }
+
     public function show(string $id): Response
     {
         /** @var Chart $chart */
@@ -41,4 +51,5 @@ class ChartController extends Controller
             'nextChartId' => $nextChart ? $nextChart->id : null
         ]);
     }
+
 }
