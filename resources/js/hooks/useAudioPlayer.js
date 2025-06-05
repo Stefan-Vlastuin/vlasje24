@@ -1,35 +1,47 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
-const useAudioPlayer = (previewUrl) => {
+const useAudioPlayer = (previewUrl, shouldPlay = false) => {
     const [isPlaying, setIsPlaying] = useState(false);
-    const [audio] = useState(new Audio(previewUrl));
+    const audioRef = useRef(new Audio(previewUrl));
 
     useEffect(() => {
-        // Add event listener for when the song ends
-        const handleSongEnd = () => {
-            setIsPlaying(false);  // Stop the playback when the song ends
-        };
+        audioRef.current.src = previewUrl;
+        audioRef.current.load();
+        setIsPlaying(false);
+    }, [previewUrl]);
 
-        // Listen for the 'ended' event
+    useEffect(() => {
+        const handleSongEnd = () => setIsPlaying(false);
+        const audio = audioRef.current;
         audio.addEventListener('ended', handleSongEnd);
 
-        // Cleanup the event listener when the component unmounts or audio changes
         return () => {
             audio.removeEventListener('ended', handleSongEnd);
-            audio.pause(); // Stop audio when navigating away
-        };
-    }, [audio]);
-
-    const togglePlay = () => {
-        if (isPlaying) {
             audio.pause();
+        };
+    }, []);
+
+    useEffect(() => {
+        if (shouldPlay) {
+            audioRef.current.play();
+            setIsPlaying(true);
         } else {
-            audio.play();
+            audioRef.current.pause();
+            setIsPlaying(false);
         }
-        setIsPlaying(!isPlaying);
+    }, [shouldPlay]);
+
+    const play = () => {
+        audioRef.current.play();
+        setIsPlaying(true);
     };
 
-    return { isPlaying, togglePlay };
+    const pause = () => {
+        audioRef.current.pause();
+        setIsPlaying(false);
+    };
+
+    return { isPlaying, play, pause };
 };
 
 export default useAudioPlayer;
