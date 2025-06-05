@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import '../../css/SearchBar.css';
 
 const SearchBar = () => {
     const [query, setQuery] = useState('');
@@ -9,7 +10,7 @@ const SearchBar = () => {
         const value = event.target.value;
         setQuery(value);
 
-        if (value.length > 2) {
+        if (value.length > 0) {
             const response = await axios.get(`/search?q=${value}`);
             setResults(response.data);
         } else {
@@ -18,7 +19,11 @@ const SearchBar = () => {
     };
 
     const handleResultClick = (result) => {
-        window.location.href = `/song/${result.id}`;
+        if (result.type === 'song') {
+            window.location.href = `/song/${result.id}`;
+        } else if (result.type === 'artist') {
+            window.location.href = `/artist/${result.id}`;
+        }
     };
 
     return (
@@ -27,13 +32,13 @@ const SearchBar = () => {
                 type="text"
                 value={query}
                 onChange={handleInputChange}
-                placeholder="Search for songs..."
+                placeholder="Zoek op titel of artiest"
             />
             {results.length > 0 && (
                 <ul className="search-results">
                     {results.map((result) => (
-                        <li key={result.id} onClick={() => handleResultClick(result)}>
-                            {result.title}
+                        <li key={`${result.type}-${result.id}`} onClick={() => handleResultClick(result)}>
+                            {result.text}
                         </li>
                     ))}
                 </ul>
