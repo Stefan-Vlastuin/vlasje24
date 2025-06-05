@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import '../../css/styles.css';
 import useAudioPlayer from "../hooks/useAudioPlayer.js";
 import { Link } from "@inertiajs/react";
@@ -8,7 +8,19 @@ import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 const Song = ({ song, chartPositions }) => {
-    const { isPlaying, togglePlay } = useAudioPlayer(song.preview_url);
+    const [playingSongId, setPlayingSongId] = useState(null);
+    const isGlobalPlaying = playingSongId === song.id;
+    const { isPlaying, play, pause } = useAudioPlayer(song.preview_url, isGlobalPlaying);
+
+    const handlePlayPause = () => {
+        if (isGlobalPlaying) {
+            setPlayingSongId(null);
+            pause();
+        } else {
+            setPlayingSongId(song.id);
+            play();
+        }
+    };
 
     const chartData = {
         labels: chartPositions.map(position => position.date),
@@ -77,9 +89,9 @@ const Song = ({ song, chartPositions }) => {
                 </div>
                 <button
                     className="play-button"
-                    onClick={togglePlay}
+                    onClick={handlePlayPause}
                 >
-                    {isPlaying ? '\u23F8' : '\u25B6'}
+                    {isGlobalPlaying && isPlaying ? '\u23F8' : '\u25B6'}
                 </button>
             </div>
             <div className="chart-container">
