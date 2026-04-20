@@ -1,0 +1,30 @@
+# Dit bestand wordt automatisch samengevoegd bij `docker compose up` (alleen voor lokale ontwikkeling).
+# Voeg dit NIET toe aan een productieserver.
+services:
+
+  db:
+    ports:
+      - "3306:3306"
+
+  backend:
+    ports:
+      - "8080:8080"
+
+  frontend:
+    ports:
+      - "80:80"
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: vlasje24-phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "8081:80"
+    depends_on:
+      db:
+        condition: service_healthy

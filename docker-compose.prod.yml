@@ -1,0 +1,22 @@
+services:
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: vlasje24-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      DOMAIN: ${DOMAIN}
+    depends_on:
+      - frontend
+
+volumes:
+  caddy_data:
+  caddy_config:
