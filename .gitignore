@@ -1,0 +1,11 @@
+# Secrets — nooit committen
+.env
+
+# IDE
+.idea/
+*.iml
+
+# Build output
+backend/target/
+frontend/node_modules/
+frontend/dist/

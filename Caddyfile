@@ -1,3 +1,7 @@
 {$DOMAIN} {
     reverse_proxy frontend:80
 }
+
+pma.{$DOMAIN} {
+    reverse_proxy phpmyadmin:80
+}

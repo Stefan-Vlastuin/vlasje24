@@ -1,0 +1,10 @@
+# Voeg dit bestand toe wanneer je images lokaal wilt bouwen of pushen.
+# Gebruik: docker compose -f docker-compose.yml -f docker-compose.build.yml build
+#          docker compose -f docker-compose.yml -f docker-compose.build.yml push
+services:
+
+  backend:
+    build: ./backend
+
+  frontend:
+    build: ./frontend

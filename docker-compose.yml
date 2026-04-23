@@ -4,6 +4,7 @@ services:
     image: mysql:8.0
     container_name: vlasje24-db
     restart: unless-stopped
+    command: mysqld --innodb-buffer-pool-size=128M --performance-schema=OFF
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: vlasje24
@@ -20,7 +21,7 @@ services:
       start_period: 30s
 
   backend:
-    build: ./backend
+    image: ${DOCKER_USERNAME}/vlasje24-backend:latest
     container_name: vlasje24-backend
     restart: unless-stopped
     environment:
@@ -28,6 +29,7 @@ services:
       SPRING_DATASOURCE_USERNAME: vlasje24_app
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_APP_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
+      JAVA_TOOL_OPTIONS: "-Xmx256m -Xms128m"
     depends_on:
       db:
         condition: service_healthy
@@ -39,16 +41,13 @@ services:
     environment:
       PMA_HOST: db
       PMA_PORT: 3306
-      PMA_USER: root
-      PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-    ports:
-      - "8081:80"
+      PMA_AUTH_TYPE: cookie
     depends_on:
       db:
         condition: service_healthy
 
   frontend:
-    build: ./frontend
+    image: ${DOCKER_USERNAME}/vlasje24-frontend:latest
     container_name: vlasje24-frontend
     restart: unless-stopped
     depends_on:
