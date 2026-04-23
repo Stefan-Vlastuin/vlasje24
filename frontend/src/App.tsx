@@ -25,8 +25,8 @@ export default function App() {
                 <Route path="/chart/:weekId" element={<HomePage />} />
                 <Route path="/song/:songId" element={<SongDetailPage />} />
                 <Route path="/artist/:artistId" element={<ArtistPage />} />
-                <Route path="/top" element={<TopSongsPage />} />
-                <Route path="/artiesten" element={<TopArtistsPage />} />
+                <Route path="/songs" element={<TopSongsPage />} />
+                <Route path="/artists" element={<TopArtistsPage />} />
               </Routes>
             </AppShell>
           }
