@@ -36,7 +36,7 @@ public class AdminService {
         for (int i = 0; i < artistIds.size(); i++) {
             Artist artist = artistRepository.findById(artistIds.get(i))
                     .orElseThrow(() -> new IllegalArgumentException("Artiest niet gevonden"));
-            artistOfSongRepository.save(new ArtistOfSong(song, artist, (byte) i));
+            artistOfSongRepository.save(new ArtistOfSong(song, artist, (byte) (i + 1)));
         }
 
         return song.getSongId();
