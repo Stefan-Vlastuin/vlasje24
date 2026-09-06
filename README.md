@@ -2,6 +2,8 @@
 
 Een Nederlandse muziekchartswebsite. Wekelijks worden 24 nummers ingevoerd via een admin-panel; bezoekers kunnen de hitlijst bekijken, door de geschiedenis navigeren, artiesten en nummers opzoeken en statistieken bekijken.
 
+Plan voor de komende gebruikersfunctionaliteit: [gebruikersaccounts en reacties](docs/accounts-en-reacties-plan.md).
+
 ## Inhoudsopgave
 
 - [Architectuur](#architectuur)
