@@ -40,6 +40,7 @@ class AuthControllerTest {
         User user = mock(User.class);
         when(user.getPassword()).thenReturn(encoder.encode("secret"));
         when(user.getUsername()).thenReturn("admin");
+        when(user.isActive()).thenReturn(true);
         when(userRepository.findByUsername("admin")).thenReturn(Optional.of(user));
         when(jwtUtil.generateToken("admin")).thenReturn("generated-token");
 
@@ -64,6 +65,7 @@ class AuthControllerTest {
     void login_wrongPassword_returns401() throws Exception {
         User user = mock(User.class);
         when(user.getPassword()).thenReturn(encoder.encode("correct"));
+        when(user.isActive()).thenReturn(true);
         when(userRepository.findByUsername("admin")).thenReturn(Optional.of(user));
 
         mockMvc.perform(post("/api/v1/auth/login")

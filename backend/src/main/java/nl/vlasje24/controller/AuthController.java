@@ -25,7 +25,7 @@ public class AuthController {
         User user = userRepository.findByUsername(dto.username())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Ongeldige inloggegevens"));
 
-        if (!passwordEncoder.matches(dto.password(), user.getPassword())) {
+        if (!user.isActive() || !passwordEncoder.matches(dto.password(), user.getPassword())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Ongeldige inloggegevens");
         }
 

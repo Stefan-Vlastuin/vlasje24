@@ -5,6 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import nl.vlasje24.repository.UserRepository;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,6 +20,7 @@ import java.util.List;
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
+    private final UserRepository userRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -29,9 +31,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             String token = header.substring(7);
             if (jwtUtil.isValid(token)) {
                 String username = jwtUtil.extractUsername(token);
-                var auth = new UsernamePasswordAuthenticationToken(
-                        username, null, List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
-                SecurityContextHolder.getContext().setAuthentication(auth);
+                userRepository.findByUsername(username)
+                        .filter(user -> user.isActive() && user.getRole() != null)
+                        .ifPresent(user -> {
+                            var authority = new SimpleGrantedAuthority("ROLE_" + user.getRole().name());
+                            var auth = new UsernamePasswordAuthenticationToken(
+                                    user.getUsername(), null, List.of(authority));
+                            SecurityContextHolder.getContext().setAuthentication(auth);
+                        });
             }
         }
         filterChain.doFilter(request, response);

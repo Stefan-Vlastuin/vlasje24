@@ -2,7 +2,10 @@ package nl.vlasje24.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import nl.vlasje24.config.SecurityConfig;
+import nl.vlasje24.domain.User;
+import nl.vlasje24.domain.UserRole;
 import nl.vlasje24.dto.CreatedDto;
+import nl.vlasje24.repository.UserRepository;
 import nl.vlasje24.security.JwtAuthFilter;
 import nl.vlasje24.security.JwtUtil;
 import nl.vlasje24.service.AdminService;
@@ -17,9 +20,10 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -32,11 +36,17 @@ class AdminControllerTest {
 
     @MockBean AdminService adminService;
     @MockBean JwtUtil jwtUtil;
+    @MockBean UserRepository userRepository;
 
     @BeforeEach
     void setUpAuth() {
         when(jwtUtil.isValid("valid-token")).thenReturn(true);
         when(jwtUtil.extractUsername("valid-token")).thenReturn("admin");
+        User admin = mock(User.class);
+        when(admin.isActive()).thenReturn(true);
+        when(admin.getRole()).thenReturn(UserRole.ADMIN);
+        when(admin.getUsername()).thenReturn("admin");
+        when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
     }
 
     @Test
@@ -101,5 +111,24 @@ class AdminControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void createArtist_userRole_returns403() throws Exception {
+        when(jwtUtil.isValid("user-token")).thenReturn(true);
+        when(jwtUtil.extractUsername("user-token")).thenReturn("member");
+        User user = mock(User.class);
+        when(user.isActive()).thenReturn(true);
+        when(user.getRole()).thenReturn(UserRole.USER);
+        when(user.getUsername()).thenReturn("member");
+        when(userRepository.findByUsername("member")).thenReturn(Optional.of(user));
+
+        mockMvc.perform(post("/api/v1/admin/artists")
+                        .header("Authorization", "Bearer user-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("name", "Adele"))))
+                .andExpect(status().isForbidden());
+
+        verifyNoInteractions(adminService);
     }
 }
