@@ -8,7 +8,7 @@ Nederlandse muziekchartswebsite. Wekelijks worden 24 nummers ingevoerd; bezoeker
 |---|---|
 | Backend | Spring Boot 3.4.4, Java 21, Spring Security + JWT (JJWT 0.12.6), JPA/Hibernate, MySQL |
 | Frontend | React 18, TypeScript 5, Vite 6, TailwindCSS 3, TanStack Query v5, React Router v6, Recharts |
-| Database | MySQL 8.0 |
+| Database | MySQL 8.0 + Flyway-migraties |
 | Infra | Docker Compose, Caddy v2 (HTTPS), nginx (SPA + API-proxy) |
 
 ## Projectstructuur
@@ -164,6 +164,13 @@ Zelfde als hierboven, maar gebruik `@PostMapping` in `AdminController` en stuur 
 4. Paden zijn Engels (bijv. `/songs`, `/artists`, `/chart/:weekId`)
 
 ### Database-schema wijzigen
-1. Pas `db/init.sql` aan
-2. Pas de betrokken JPA-entiteit(en) aan
-3. Bij een bestaande database: pas het schema handmatig aan via phpMyAdmin of SQL — Hibernate doet dit NIET automatisch (`ddl-auto: validate`)
+1. Voeg een nieuwe versioned migratie toe in `backend/src/main/resources/db/migration` (bijv. `V2__add_comments.sql`)
+2. Wijzig een al toegepaste migratie nooit
+3. Pas de betrokken JPA-entiteit(en) aan
+4. Flyway migreert bij backend-start; Hibernate valideert het resultaat (`ddl-auto: validate`)
+
+### Eerste Flyway-deploy op een bestaande database
+1. Maak eerst een database-back-up
+2. Deploy de Flyway-introductie zonder andere schemawijzigingen
+3. Zet `FLYWAY_BASELINE_ON_MIGRATE=true` voor één backend-start
+4. Controleer `flyway_schema_history` en zet de variabele daarna terug op `false`

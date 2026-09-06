@@ -12,6 +12,7 @@ Een Nederlandse muziekchartswebsite. Wekelijks worden 24 nummers ingevoerd via e
 - [Omgevingsvariabelen](#omgevingsvariabelen)
 - [API-overzicht](#api-overzicht)
 - [Databaseschema](#databaseschema)
+- [Databasemigraties](#databasemigraties)
 - [Tests draaien](#tests-draaien)
 
 ---
@@ -186,6 +187,7 @@ Kopieer `.env.example` naar `.env` en vul alle waarden in.
 |---|---|
 | `MYSQL_ROOT_PASSWORD` | MySQL root-wachtwoord (alleen voor DB-initialisatie) |
 | `MYSQL_APP_PASSWORD` | Wachtwoord voor de app-gebruiker `vlasje24_app` |
+| `FLYWAY_BASELINE_ON_MIGRATE` | Alleen eenmalig `true` bij de eerste Flyway-deploy op een bestaande database; normaal `false` |
 | `JWT_SECRET` | Signing-secret voor JWT-tokens (minimaal 32 tekens) |
 | `DOMAIN` | Productiedomein zonder `https://` (bijv. `vlasje24.nl`) |
 | `DOCKER_USERNAME` | Docker Hub gebruikersnaam (voor push/pull) |
@@ -235,7 +237,30 @@ user         (user_id PK, username UNIQUE, password)
 
 De tabel `date` bevat chartsweken; `chart` bevat de 24 posities per week. Punten worden berekend als `25 - positie` (positie 1 = 24 punten, positie 24 = 1 punt).
 
-Schema wordt aangemaakt via `db/init.sql` bij eerste DB-start. Hibernate valideert het schema bij elke opstart (`ddl-auto: validate`).
+Flyway maakt en migreert het schema bij het starten van de backend. Hibernate valideert het resultaat daarna (`ddl-auto: validate`).
+
+---
+
+## Databasemigraties
+
+Migraties staan in `backend/src/main/resources/db/migration` en hebben namen zoals:
+
+```text
+V1__initial_schema.sql
+V2__add_comments.sql
+```
+
+Wijzig een toegepaste migratie nooit; voeg voor iedere wijziging een nieuwe versie toe.
+
+### Eenmalige overstap van een bestaande database
+
+Maak eerst een databaseback-up en start de eerste Flyway-versie van de backend eenmalig met:
+
+```dotenv
+FLYWAY_BASELINE_ON_MIGRATE=true
+```
+
+Flyway registreert het bestaande schema dan als versie 1. Controleer na de start de tabel `flyway_schema_history` en zet de variabele daarna terug op `false`. Voer de Flyway-introductie bij voorkeur uit als aparte deploy zonder andere schemawijzigingen.
 
 ---
 
