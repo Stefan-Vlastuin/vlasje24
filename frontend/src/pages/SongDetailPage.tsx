@@ -85,7 +85,7 @@ export function SongDetailPage() {
         </div>
       </div>
 
-      {data.chartHistory.length > 1 && (
+      {data.chartHistory.length > 0 && (
         <div className="bg-white rounded-2xl shadow-sm p-5">
           <PositionChart history={data.chartHistory} />
         </div>
