@@ -7,7 +7,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts'
-import { format } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 import { nl } from 'date-fns/locale'
 import type { ChartHistoryEntryDto } from '../../types/api'
 
@@ -17,7 +17,7 @@ interface Props {
 
 export function PositionChart({ history }: Props) {
   const data = history.map(entry => ({
-    date: format(new Date(entry.date), 'd MMM', { locale: nl }),
+    date: entry.date,
     position: entry.position,
   }))
 
@@ -27,7 +27,11 @@ export function PositionChart({ history }: Props) {
       <ResponsiveContainer width="100%" height={250}>
         <LineChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-          <XAxis dataKey="date" tick={{ fill: '#6b7280', fontSize: 12 }} />
+          <XAxis
+            dataKey="date"
+            tick={{ fill: '#6b7280', fontSize: 12 }}
+            tickFormatter={(date: string) => format(parseISO(date), 'd MMM ’yy', { locale: nl })}
+          />
           <YAxis
             reversed
             domain={[1, 24]}
@@ -38,6 +42,7 @@ export function PositionChart({ history }: Props) {
           <Tooltip
             contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
             labelStyle={{ color: '#374151', fontWeight: 600 }}
+            labelFormatter={(date: string) => format(parseISO(date), 'd MMMM yyyy', { locale: nl })}
             formatter={(value: number) => [`Positie ${value}`]}
           />
           <Line
