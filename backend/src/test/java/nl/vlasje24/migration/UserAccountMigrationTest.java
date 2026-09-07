@@ -56,5 +56,14 @@ class UserAccountMigrationTest {
         assertThat(jdbc.queryForObject(
                 "SELECT `status` FROM `user` WHERE `username` = 'regular-user'", String.class))
                 .isEqualTo("ACTIVE");
+
+        assertThat(jdbc.queryForObject(
+                "SELECT COUNT(*) FROM information_schema.tables " +
+                        "WHERE table_schema = DATABASE() AND table_name = 'SPRING_SESSION'", Integer.class))
+                .isEqualTo(1);
+        assertThat(jdbc.queryForObject(
+                "SELECT COUNT(*) FROM information_schema.tables " +
+                        "WHERE table_schema = DATABASE() AND table_name = 'SPRING_SESSION_ATTRIBUTES'", Integer.class))
+                .isEqualTo(1);
     }
 }

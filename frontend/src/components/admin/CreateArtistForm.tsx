@@ -1,19 +1,17 @@
 import { useState } from 'react'
 import { api } from '../../api/client'
-import { useAuth } from '../../hooks/useAuth'
 
 export function CreateArtistForm() {
   const [name, setName] = useState('')
   const [status, setStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [loading, setLoading] = useState(false)
-  const { getToken } = useAuth()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setStatus(null)
     setLoading(true)
     try {
-      const res = await api.createArtist(name, getToken()!)
+      const res = await api.createArtist(name)
       setStatus({ type: 'success', message: `Artiest aangemaakt met ID ${res.id}` })
       setName('')
     } catch (err) {

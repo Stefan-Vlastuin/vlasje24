@@ -6,7 +6,7 @@ Nederlandse muziekchartswebsite. Wekelijks worden 24 nummers ingevoerd; bezoeker
 
 | Laag | Technologie |
 |---|---|
-| Backend | Spring Boot 3.4.4, Java 21, Spring Security + JWT (JJWT 0.12.6), JPA/Hibernate, MySQL |
+| Backend | Spring Boot 3.4.4, Java 21, Spring Security + Spring Session JDBC, JPA/Hibernate, MySQL |
 | Frontend | React 18, TypeScript 5, Vite 6, TailwindCSS 3, TanStack Query v5, React Router v6, Recharts |
 | Database | MySQL 8.0 + Flyway-migraties |
 | Infra | Docker Compose, Caddy v2 (HTTPS), nginx (SPA + API-proxy) |
@@ -17,7 +17,7 @@ Nederlandse muziekchartswebsite. Wekelijks worden 24 nummers ingevoerd; bezoeker
 backend/src/main/java/nl/vlasje24/
 ├── Main.java                          # Entry point
 ├── config/
-│   ├── SecurityConfig.java            # CORS, JWT-filter, BCrypt, endpoint-rechten
+│   ├── SecurityConfig.java            # CORS, sessies, CSRF, BCrypt, endpoint-rechten
 │   └── WebConfig.java                 # Leeg placeholder
 ├── controller/                        # REST-endpoints (dunne laag, delegeert naar services)
 ├── domain/                            # JPA-entiteiten
@@ -25,8 +25,9 @@ backend/src/main/java/nl/vlasje24/
 ├── exception/                         # NotFoundException + GlobalExceptionHandler (→ 404)
 ├── repository/                        # Spring Data JPA interfaces met JPQL
 ├── security/
-│   ├── JwtUtil.java                   # Token genereren/valideren (HMAC-SHA256, TTL 24u)
-│   └── JwtAuthFilter.java             # OncePerRequestFilter: Bearer-token → SecurityContext
+│   ├── AccountPrincipal.java          # Veilige, serialiseerbare sessieprincipal
+│   ├── AppUserDetailsService.java     # Accounts en rollen uit de database
+│   └── AuthRateLimiter.java           # Basislimieten voor login en registratie
 └── service/                           # Businesslogica
 
 frontend/src/
@@ -34,7 +35,6 @@ frontend/src/
 ├── api/client.ts                      # Alle fetch-calls, BASE_URL = '/api/v1'
 ├── types/api.ts                       # TypeScript-interfaces die overeenkomen met backend-DTOs
 ├── hooks/
-│   ├── useAuth.ts                     # JWT in localStorage ('vlasje24_admin_token')
 │   └── useAudioPlayer.ts              # Globale singleton audiospeler (Context)
 ├── pages/                             # Één component per route
 └── components/
@@ -64,11 +64,13 @@ Alle JPQL-sorteerqueries in `ChartEntryRepository` gebruiken meerdere `ORDER BY`
 - weken: `COUNT DESC, SUM DESC, MIN(positie) ASC`
 - positie: `MIN(positie) ASC, SUM DESC, COUNT DESC`
 
-### Admin-authenticatie
-JWT-token zit in localStorage (`vlasje24_admin_token`). Token wordt als `Authorization: Bearer <token>` meegestuurd bij admin-calls. De `JwtAuthFilter` valideert het en stelt `ROLE_ADMIN` in de `SecurityContext`.
+### Authenticatie en adminrechten
+Authenticatie gebruikt een server-side Spring Session in MySQL. De browser ontvangt de HttpOnly-cookie `VLASJE24_SESSION`; alle frontendrequests gebruiken `credentials: 'include'`. Rollen komen via `AppUserDetailsService` uit de database. Alleen `ROLE_ADMIN` heeft toegang tot `/api/v1/admin/**`.
+
+CSRF staat aan. `frontend/src/api/client.ts` haalt via `GET /api/v1/auth/csrf` het token op en stuurt bij POST/PATCH/DELETE de header `X-XSRF-TOKEN`. Voeg nooit bearer/JWT-authenticatie of authdata in `localStorage` terug.
 
 ### Wachtwoord-hashing
-Wachtwoorden worden opgeslagen als BCrypt-hash. `SecurityConfig` registreert een `BCryptPasswordEncoder`-bean. Admin-accounts moeten handmatig via SQL worden aangemaakt met een vooraf gegenereerde BCrypt-hash.
+Wachtwoorden worden opgeslagen als BCrypt-hash. `SecurityConfig` registreert een `BCryptPasswordEncoder`-bean. Admin-accounts moeten handmatig via SQL worden aangemaakt met een vooraf gegenereerde BCrypt-hash en expliciet `role = 'ADMIN'` krijgen.
 
 ## Lokaal draaien
 
@@ -91,7 +93,7 @@ cd frontend && npm install && npm run dev
 cd backend && mvn test
 ```
 
-33 tests in 7 klassen. Draaien zonder database (datasource-autoconfiguratie uitgesloten in `src/test/resources/application.yml`).
+De meeste tests draaien zonder database (datasource-autoconfiguratie uitgesloten in `src/test/resources/application.yml`). Repository- en migratietests gebruiken Testcontainers met MySQL en worden zonder bereikbare Docker-daemon overgeslagen.
 
 **Testpatronen om te kennen:**
 - `@MockitoSettings(strictness = Strictness.LENIENT)` — vereist voor services waarbij sommige stubs alleen bij bepaalde tests worden gebruikt
@@ -123,12 +125,7 @@ Voeg nooit een absolute URL toe aan de API-client.
 
 ## CORS
 
-`SecurityConfig.corsConfigurationSource()` staat momenteel hardcoded origins toe:
-```java
-List.of("http://localhost:5173", "http://localhost", "https://vlasje24.nl", "https://new.vlasje24.nl")
-```
-
-**Bekende verbetering:** Dit zou configureerbaar moeten zijn via een omgevingsvariabele (bijv. `CORS_ALLOWED_ORIGINS`) zodat het zonder code-rebuild aanpasbaar is per omgeving.
+De expliciet toegestane origins komen uit `CORS_ALLOWED_ORIGINS`. Credentialed CORS staat alleen voor die origins aan. De lokale Docker override gebruikt `http://localhost` en `http://localhost:5173`.
 
 ## Deployment-workflow
 
@@ -140,8 +137,8 @@ Reden: Spring Boot Maven-build vereist veel geheugen. De server heeft een kleine
 
 ## Bekende issues / TODO's
 
-- **CORS hardcoded:** Productiedomeinen zijn hardcoded in `SecurityConfig.java`. Bij een nieuw domein moet de code worden aangepast en de backend opnieuw worden gebouwd.
-- **Admin-account aanmaken:** Er is geen UI of CLI voor het aanmaken van admin-accounts. BCrypt-hash moet handmatig via SQL worden ingevoerd. Genereer een hash met: `python3 -c "import bcrypt; print(bcrypt.hashpw(b'ww', bcrypt.gensalt(10)).decode())"`.
+- **Admin-account aanmaken:** Er is geen UI of CLI voor het aanmaken van admin-accounts. BCrypt-hash en rol moeten handmatig via SQL worden ingevoerd. Genereer een hash met: `python3 -c "import bcrypt; print(bcrypt.hashpw(b'ww', bcrypt.gensalt(10)).decode())"`.
+- **Auth-rate-limit is lokaal:** Login- en registratielimieten leven in het backendproces. Bij meerdere backendreplica's is gedeelde opslag nodig.
 - **phpMyAdmin in productie:** Bereikbaar via `https://pma.{DOMAIN}` (vereist DNS A-record `pma.domein.nl`). Gebruikt cookie-auth (`PMA_AUTH_TYPE=cookie`).
 - **WebConfig.java leeg:** Kan worden verwijderd of gebruikt voor toekomstige web-configuratie.
 
@@ -155,7 +152,9 @@ Reden: Spring Boot Maven-build vereist veel geheugen. De server heeft een kleine
 5. Voeg een functie toe aan `frontend/src/api/client.ts`
 
 ### Nieuw admin-endpoint toevoegen
-Zelfde als hierboven, maar gebruik `@PostMapping` in `AdminController` en stuur een `token` mee in de `api.post()`-call in de frontend.
+Zelfde als hierboven, maar beveilig het endpoint met `ROLE_ADMIN`. De frontend stuurt
+de sessiecookie automatisch mee; muterende requests krijgen via de API-client ook de
+vereiste CSRF-header.
 
 ### Nieuwe frontend-pagina toevoegen
 1. Maak een component in `frontend/src/pages/`
@@ -164,7 +163,7 @@ Zelfde als hierboven, maar gebruik `@PostMapping` in `AdminController` en stuur 
 4. Paden zijn Engels (bijv. `/songs`, `/artists`, `/chart/:weekId`)
 
 ### Database-schema wijzigen
-1. Voeg een nieuwe versioned migratie toe in `backend/src/main/resources/db/migration` (bijv. `V2__add_comments.sql`)
+1. Voeg een nieuwe versioned migratie toe in `backend/src/main/resources/db/migration` (bijv. `V4__add_comments.sql`)
 2. Wijzig een al toegepaste migratie nooit
 3. Pas de betrokken JPA-entiteit(en) aan
 4. Flyway migreert bij backend-start; Hibernate valideert het resultaat (`ddl-auto: validate`)

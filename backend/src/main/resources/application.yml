@@ -15,12 +15,26 @@ spring:
   flyway:
     baseline-on-migrate: ${FLYWAY_BASELINE_ON_MIGRATE:false}
     baseline-version: 1
+  session:
+    timeout: ${SESSION_TIMEOUT:14d}
+    jdbc:
+      initialize-schema: never
   jackson:
     serialization:
       write-dates-as-timestamps: false
 
 server:
   port: 8080
+  forward-headers-strategy: framework
+  servlet:
+    session:
+      cookie:
+        name: VLASJE24_SESSION
+        http-only: true
+        secure: ${SESSION_COOKIE_SECURE:false}
+        same-site: lax
+        max-age: ${SESSION_TIMEOUT:14d}
 
-jwt:
-  secret: ${JWT_SECRET:vlasje24-local-dev-secret-not-for-production-use-only}
+app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost,https://vlasje24.nl,https://new.vlasje24.nl}

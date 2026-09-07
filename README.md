@@ -155,7 +155,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
 ## Admin-account aanmaken
 
-Er is geen registratie-UI. Een account wordt direct in de database aangemaakt. Het wachtwoord moet als BCrypt-hash worden opgeslagen.
+Er is nog geen registratie-UI. Een adminaccount wordt direct in de database aangemaakt. Het wachtwoord moet als BCrypt-hash worden opgeslagen.
 
 ### Hash genereren
 
@@ -173,8 +173,15 @@ htpasswd -bnBC 10 "" jouwwachtwoord | tr -d ':\n'
 ### Gebruiker invoegen (via phpMyAdmin of MySQL CLI)
 
 ```sql
-INSERT INTO user (username, password)
-VALUES ('admin', '$2a$10$...hier-de-gegenereerde-hash...');
+INSERT INTO user (username, password, email, email_verified_at, role, status)
+VALUES (
+  'admin',
+  '$2a$10$...hier-de-gegenereerde-hash...',
+  'admin@example.nl',
+  UTC_TIMESTAMP(6),
+  'ADMIN',
+  'ACTIVE'
+);
 ```
 
 > De hash begint altijd met `$2a$10$` en is 60 tekens lang.
@@ -190,7 +197,9 @@ Kopieer `.env.example` naar `.env` en vul alle waarden in.
 | `MYSQL_ROOT_PASSWORD` | MySQL root-wachtwoord (alleen voor DB-initialisatie) |
 | `MYSQL_APP_PASSWORD` | Wachtwoord voor de app-gebruiker `vlasje24_app` |
 | `FLYWAY_BASELINE_ON_MIGRATE` | Alleen eenmalig `true` bij de eerste Flyway-deploy op een bestaande database; normaal `false` |
-| `JWT_SECRET` | Signing-secret voor JWT-tokens (minimaal 32 tekens) |
+| `SESSION_TIMEOUT` | Geldigheidsduur van een inactieve sessie; standaard `14d` |
+| `SESSION_COOKIE_SECURE` | In productie `true`; lokale Docker-ontwikkeling zet dit op `false` voor HTTP |
+| `CORS_ALLOWED_ORIGINS` | Expliciete, kommagescheiden frontend-origins die cookies mogen meesturen |
 | `DOMAIN` | Productiedomein zonder `https://` (bijv. `vlasje24.nl`) |
 | `DOCKER_USERNAME` | Docker Hub gebruikersnaam (voor push/pull) |
 
@@ -198,7 +207,7 @@ Kopieer `.env.example` naar `.env` en vul alle waarden in.
 
 ## API-overzicht
 
-Alle endpoints beginnen met `/api/v1`. Endpoints zonder auth zijn publiek leesbaar; admin-endpoints vereisen een `Authorization: Bearer <token>` header.
+Alle endpoints beginnen met `/api/v1`. Publieke data is zonder account leesbaar. Authenticatie gebruikt een server-side sessie in MySQL en een Secure/HttpOnly/SameSite=Lax-cookie. De frontend haalt via `GET /auth/csrf` een CSRF-token op en stuurt dat bij mutaties als `X-XSRF-TOKEN`; de meegeleverde API-client handelt dit automatisch af.
 
 ### Publieke endpoints
 
@@ -212,14 +221,25 @@ Alle endpoints beginnen met `/api/v1`. Endpoints zonder auth zijn publiek leesba
 | GET | `/artists/{artistId}` | Artiestdetails + nummers |
 | GET | `/artists/top?sort=points&page=0` | Top-artiesten (sort: `points`, `hits`) |
 | GET | `/search?q=query` | Zoek nummers + artiesten (max 5 elk) |
+| GET | `/auth/csrf` | Initialiseer CSRF-bescherming voor mutaties |
+| POST | `/auth/register` | Maak een ongeverifieerd USER-account aan |
+| POST | `/auth/login` | Log in met gebruikersnaam of e-mailadres en start een sessie |
 
 Optionele query-param: `year=2024` om te filteren op jaar.
 
-### Admin-endpoints (JWT vereist)
+Registratie heeft in fase 2 nog geen frontendpagina en verstuurt nog geen verificatiemail; dat volgt in fase 3 en 4 van het [accountplan](docs/accounts-en-reacties-plan.md).
+
+### Sessie-endpoints
+
+| Method | Pad | Omschrijving |
+|---|---|---|
+| GET | `/auth/me` | Geef de ingelogde veilige account-DTO terug |
+| POST | `/auth/logout` | Vernietig de huidige sessie |
+
+### Admin-endpoints (`ADMIN`-rol vereist)
 
 | Method | Pad | Body |
 |---|---|---|
-| POST | `/auth/login` | `{ "username": "...", "password": "..." }` |
 | POST | `/admin/artists` | `{ "name": "..." }` |
 | POST | `/admin/songs` | `{ "title", "imageUrl", "previewUrl", "artistIds": [1, 2] }` |
 | POST | `/admin/charts` | `{ "date": "2024-01-01", "songIds": [1..24] }` (exact 24 nummers) |
@@ -234,7 +254,8 @@ song         (song_id PK, title, image_url, preview_url)
 artist       (artist_id PK, name)
 artist_of_song (song_id FK, artist_id FK, artist_order) — PK(song_id, artist_id)
 chart        (week_id FK, position, song_id FK) — PK(week_id, position)
-user         (user_id PK, username UNIQUE, password)
+user         (user_id PK, username UNIQUE, password, email UNIQUE, role, status, verificatie/timestamps)
+SPRING_SESSION + SPRING_SESSION_ATTRIBUTES (server-side browsersessies)
 ```
 
 De tabel `date` bevat chartsweken; `chart` bevat de 24 posities per week. Punten worden berekend als `25 - positie` (positie 1 = 24 punten, positie 24 = 1 punt).
@@ -249,7 +270,8 @@ Migraties staan in `backend/src/main/resources/db/migration` en hebben namen zoa
 
 ```text
 V1__initial_schema.sql
-V2__add_comments.sql
+V2__expand_user_accounts.sql
+V3__create_spring_session_tables.sql
 ```
 
 Wijzig een toegepaste migratie nooit; voeg voor iedere wijziging een nieuwe versie toe.
@@ -273,4 +295,6 @@ cd backend
 mvn test
 ```
 
-De tests draaien zonder echte database (datasource-autoconfiguratie is uitgesloten in `src/test/resources/application.yml`). Er zijn 7 testklassen met in totaal 33 tests.
+De unit- en weblaagtests draaien zonder externe database. Repository-, migratie- en
+sessie-integratietests starten via Testcontainers een tijdelijke MySQL 8-database;
+daarvoor moet Docker beschikbaar zijn.

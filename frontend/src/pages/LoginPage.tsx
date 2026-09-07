@@ -1,14 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { api } from '../api/client'
-import { useAuth } from '../hooks/useAuth'
+import { api, ApiError } from '../api/client'
 
 export function LoginPage() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const { login } = useAuth()
   const navigate = useNavigate()
 
   async function handleSubmit(e: React.FormEvent) {
@@ -16,11 +14,21 @@ export function LoginPage() {
     setError(null)
     setLoading(true)
     try {
-      const res = await api.login(username, password)
-      login(res.token)
+      const account = await api.login(username, password)
+      if (account.role !== 'ADMIN') {
+        try {
+          await api.logout()
+        } catch {
+          // The server-side role check still protects all admin endpoints.
+        }
+        setError('Dit account heeft geen beheerrechten')
+        return
+      }
       navigate('/admin')
-    } catch {
-      setError('Ongeldige inloggegevens')
+    } catch (err) {
+      setError(err instanceof ApiError && err.code === 'RATE_LIMITED'
+        ? err.message
+        : 'Ongeldige inloggegevens')
     } finally {
       setLoading(false)
     }
@@ -32,7 +40,7 @@ export function LoginPage() {
         <h1 className="text-2xl font-bold text-gray-900 mb-6 text-center">Beheerder inloggen</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Gebruikersnaam</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Gebruikersnaam of e-mailadres</label>
             <input
               type="text"
               value={username}

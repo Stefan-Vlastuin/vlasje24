@@ -1,7 +1,8 @@
 # Implementatieplan: gebruikersaccounts en reacties
 
-Status: plan, nog niet geïmplementeerd  
-Laatste inhoudelijke update: 6 september 2026
+Status: fase 1 en 2 geïmplementeerd; fase 3 en verder gepland
+
+Laatste inhoudelijke update: 7 september 2026
 
 Dit document is bedoeld als overdracht naar een volgende ontwikkelsessie. Het beschrijft zowel de gekozen richting als de relevante huidige situatie, migratievolgorde, API-contracten, beveiliging, e-mail, tests en uitrol.
 
@@ -66,29 +67,28 @@ De gratis limiet van Brevo is op de datum van dit document 300 e-mails per dag e
 - `backend/src/main/java/nl/vlasje24/domain/User.java`
 - `backend/src/main/java/nl/vlasje24/controller/AuthController.java`
 - `backend/src/main/java/nl/vlasje24/config/SecurityConfig.java`
-- `backend/src/main/java/nl/vlasje24/security/JwtAuthFilter.java`
-- `backend/src/main/java/nl/vlasje24/security/JwtUtil.java`
-- `frontend/src/hooks/useAuth.ts`
+- `backend/src/main/java/nl/vlasje24/security/AppUserDetailsService.java`
+- `backend/src/main/java/nl/vlasje24/security/AuthRateLimiter.java`
+- `backend/src/main/resources/db/migration/V3__create_spring_session_tables.sql`
 - `frontend/src/api/client.ts`
 - `frontend/src/App.tsx`
 - `frontend/src/pages/HomePage.tsx`
 - `docker-compose.yml`
 - `.env.example`
 
-### Huidige authenticatie en belangrijk migratierisico
+### Huidige authenticatie na fase 2
 
-Er bestaat momenteel alleen handmatig aangemaakte adminauthenticatie:
+- `user` bevat accountvelden, een database-backed rol en een status;
+- `POST /api/v1/auth/login` start een server-side sessie en retourneert alleen de veilige account-DTO;
+- login accepteert een gebruikersnaam of e-mailadres en weigert niet-actieve accounts met dezelfde generieke fout;
+- Spring Session bewaart sessies 14 dagen in MySQL via de door Flyway aangemaakte tabellen;
+- de browser gebruikt de Secure/HttpOnly/SameSite=Lax-cookie `VLASJE24_SESSION`;
+- CSRF staat aan; `GET /api/v1/auth/csrf` initialiseert `XSRF-TOKEN` en mutaties sturen `X-XSRF-TOKEN`;
+- rollen komen via `AppUserDetailsService` uit de database; `/api/v1/admin/**` vereist `ROLE_ADMIN`;
+- login is begrensd op 10 pogingen per minuut en registratie op 5 pogingen per uur per client-IP;
+- JWT-code, bearer-tokenrespons, `JWT_SECRET` en de `localStorage`-adminflow zijn direct verwijderd.
 
-- tabel `user` bevat alleen `user_id`, `username` en een BCrypt-wachtwoord;
-- `POST /api/v1/auth/login` retourneert een JWT;
-- de frontend bewaart die JWT onder `vlasje24_admin_token` in `localStorage`;
-- iedere geldige JWT krijgt in `JwtAuthFilter` automatisch `ROLE_ADMIN`;
-- het token is 24 uur geldig en kan niet individueel worden ingetrokken;
-- de filter controleert na tokenuitgifte niet opnieuw of de gebruiker nog bestaat of geblokkeerd is;
-- CSRF staat uit omdat de API nu stateless met bearer-tokens werkt;
-- iedere `GET /api/**` is publiek en `/api/v1/admin/**` vereist alleen authenticatie.
-
-Daarom mogen gewone accounts niet simpelweg op het huidige JWT-mechanisme worden aangesloten. Tijdens de overgang moet minimaal de rol uit de database komen. Het einddoel is cookiesessies voor zowel gebruikers als admins en verwijdering van de admin-JWT uit `localStorage`.
+De overgang is bewust als één brekende backend/frontend-release uitgevoerd. Er is geen tijdelijke compatibiliteitsperiode voor oude JWT-clients; bestaande JWT's worden na de release niet meer geaccepteerd en iedereen moet opnieuw inloggen. Dit is aanvaardbaar omdat downtime en opnieuw inloggen of accounts opnieuw aanmaken voor deze release expliciet zijn toegestaan.
 
 ## 4. Doelarchitectuur
 
@@ -184,7 +184,8 @@ Alle routes blijven onder `/api/v1`.
 
 | Methode | Endpoint | Authenticatie | Gedrag |
 |---|---|---|---|
-| `POST` | `/auth/register` | Publiek | Maakt USER-account en verificatietoken; verstuurt mail |
+| `GET` | `/auth/csrf` | Publiek | Initialiseert en retourneert het CSRF-token voor de SPA |
+| `POST` | `/auth/register` | Publiek | Maakt een nog ongeverifieerd USER-account; token en mail volgen in fase 3 |
 | `POST` | `/auth/login` | Publiek | Login met gebruikersnaam of e-mail; start sessie |
 | `POST` | `/auth/logout` | Ingelogd | Beëindigt sessie en wist cookie |
 | `GET` | `/auth/me` | Optioneel | Geeft huidige gebruiker of 401 terug |
@@ -271,6 +272,8 @@ Klaar wanneer: domeinverificatie slaagt en een handmatige testmail bij ten minst
 
 ### Fase 1 — Accountdatamodel en rollen
 
+Status: geïmplementeerd.
+
 1. Voeg een migratie toe, bijvoorbeeld `V2__expand_user_accounts.sql`.
 2. Breid `User` uit met e-mail, verificatietijd, rol, status en timestamps.
 3. Zet bestaande rijen expliciet op `ADMIN`; verlies het bestaande adminaccount niet.
@@ -282,6 +285,8 @@ Klaar wanneer: de bestaande admin kan nog inloggen en een gewone gebruiker kan i
 
 ### Fase 2 — Veilige sessieauthenticatie
 
+Status: geïmplementeerd.
+
 1. Voeg `spring-session-jdbc` toe.
 2. Maak de sessietabellen via een Flyway-migratie.
 3. Implementeer registratie, sessielogin, logout en `/auth/me`.
@@ -289,15 +294,16 @@ Klaar wanneer: de bestaande admin kan nog inloggen en een gewone gebruiker kan i
 5. Gebruik een Secure, HttpOnly, SameSite=Lax-cookie in productie.
 6. Zet CSRF aan met een SPA-geschikte tokenaanpak, bijvoorbeeld `CookieCsrfTokenRepository`; stuur bij mutaties `X-XSRF-TOKEN`.
 7. Zet CORS `allowCredentials` alleen aan voor de expliciet toegestane development/productie-origins.
-8. Voeg basis-rate-limits toe aan login en registratie.
+8. Voeg basis-rate-limits toe aan login en registratie. Geïmplementeerde startwaarden: 10 loginpogingen per minuut en 5 registraties per uur per client-IP. De limiter is lokaal in het backendproces; bij meerdere backendreplica's moet deze later naar gedeelde opslag.
 
-Veilige overgang van de bestaande adminfrontend:
+Bewust gekozen directe overgang van de bestaande adminfrontend:
 
-1. Backendrelease: ondersteun sessielogin en laat tijdelijk de bestaande adminflow werken, maar bepaal JWT-rollen al uit de database.
-2. Frontendrelease: laat de adminpagina cookies en `/auth/me` gebruiken in plaats van `localStorage`.
-3. Opruimrelease: verwijder `JwtAuthFilter`, `JwtUtil`, `JWT_SECRET`, bearer-tokenrespons en `vlasje24_admin_token`.
+1. Backend en frontend worden als één release uitgerold; een korte onderhoudsperiode is toegestaan.
+2. De adminpagina gebruikt direct cookies en `/auth/me`; er is geen tijdelijke JWT-compatibiliteit.
+3. `JwtAuthFilter`, `JwtUtil`, JJWT-dependencies, `JWT_SECRET`, bearer-tokenrespons en `vlasje24_admin_token` zijn in dezelfde release verwijderd.
+4. Bestaande sessies/JWT's blijven niet geldig. Gebruikers en admins loggen na uitrol opnieuw in; indien gewenst mogen accounts opnieuw worden aangemaakt.
 
-Laat een tijdelijke JWT nooit automatisch `ROLE_ADMIN` geven op basis van alleen een geldige handtekening.
+Registratie maakt in deze fase alleen het account aan. Omdat `account_token` en mail pas fase 3 zijn, wordt het account nog niet automatisch geverifieerd en wordt nog geen verificatiemail verstuurd.
 
 Klaar wanneer: USER kan niet bij `/admin/**`, ADMIN wel, logout maakt de sessie werkelijk ongeldig en de frontend bevat geen JWT meer in `localStorage`.
 
@@ -335,8 +341,8 @@ Klaar wanneer: verificatie- en resetlinks zijn eenmalig, verlopen correct, lekke
 3. Pas de fetch-client aan met `credentials: 'include'`, CSRF-header en consistente foutafhandeling.
 4. Toon in de header login/account/logout.
 5. Maak duidelijk dat verificatie nodig is en bied opnieuw verzenden aan.
-6. Migreer tegelijk de adminpagina naar rollen uit `/auth/me`.
-7. Verwijder na de overgang de oude `useAuth`-localStorageflow.
+6. De adminpagina gebruikt sinds fase 2 al rollen uit `/auth/me`.
+7. De oude `useAuth`-localStorageflow is sinds fase 2 al verwijderd.
 
 Klaar wanneer: registratie tot verificatie werkt op mobiel en desktop, een refresh de sessie behoudt en adminnavigatie alleen voor ADMIN zichtbaar/toegankelijk is.
 
@@ -431,24 +437,24 @@ Gebruik bij voorkeur Testcontainers met MySQL voor migraties en constraints; H2 
 
 ## 10. Uitrol en rollback
 
-Aanbevolen volgorde per release:
+Aanbevolen volgorde vanaf fase 3:
 
 1. databaseback-up;
 2. images bouwen en tests draaien;
-3. achterwaarts compatibele backend/schemawijziging deployen;
+3. backend/schemawijziging deployen;
 4. logs en Flyway `flyway_schema_history` controleren;
 5. frontend deployen;
 6. smoke-test uitvoeren;
-7. pas in een latere release oude JWT-code en oude kolommen/configuratie opruimen.
+7. controleer na de directe fase-2-overgang dat geen client nog bearer-authenticatie verwacht.
 
-Gebruik expand-and-contract: eerst nieuwe nullable kolommen/routes toevoegen, daarna data/frontends migreren en pas later oude functionaliteit verwijderen. Een Flyway-migratie wordt niet teruggedraaid door een oud image te starten. Bij een mislukte destructieve migratie is de databaseback-up de herstelroute; voorkom destructieve migraties in de eerste releases.
+Voor fase 2 is bewust geen expand-and-contract-overgang gebruikt: backend en frontend moeten samen worden uitgerold. Gebruik voor toekomstige destructieve schemawijzigingen wel expand-and-contract. Een Flyway-migratie wordt niet teruggedraaid door een oud image te starten. Bij een mislukte destructieve migratie is de databaseback-up de herstelroute.
 
 ## 11. Nog expliciet te bevestigen vóór implementatie
 
 Deze keuzes blokkeren het voorbereidende backendwerk niet, maar moeten vóór publieke lancering definitief zijn:
 
 - het concrete privé-e-mailadres dat in productie als Reply-To wordt ingesteld;
-- gewenste sessieduur (advies: 14 dagen);
+- of de nu ingestelde sessieduur van 14 dagen later moet wijzigen;
 - mogen gebruikers hun reacties onbeperkt bewerken, of alleen binnen bijvoorbeeld 15 minuten;
 - exacte maximale reactielengte (advies: 1.000 tekens);
 - bewaartermijn voor verwijderde reacties en moderatie-auditlogs;
@@ -493,7 +499,7 @@ Dit is een richtlijn voor de implementatiestructuur, geen verplichting om exact 
 - headeraccountmenu in `AppShell`;
 - `ChartComments` met lijst, formulier, paginering en eigenaaracties;
 - adminpagina's voor commentmoderatie en gebruikersblokkering;
-- verwijder na de overgang de huidige JWT/localStorage-helper.
+- de JWT/localStorage-helper is in fase 2 al verwijderd.
 
 ### Docker en configuratie
 

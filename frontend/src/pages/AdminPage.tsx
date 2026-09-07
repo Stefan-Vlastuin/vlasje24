@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth'
+import { api } from '../api/client'
 import { CreateArtistForm } from '../components/admin/CreateArtistForm'
 import { CreateSongForm } from '../components/admin/CreateSongForm'
 import { CreateChartForm } from '../components/admin/CreateChartForm'
@@ -9,19 +9,31 @@ type Tab = 'artist' | 'song' | 'chart'
 
 export function AdminPage() {
   const [tab, setTab] = useState<Tab>('artist')
-  const { isAuthenticated, logout } = useAuth()
+  const [authorized, setAuthorized] = useState<boolean | null>(null)
   const navigate = useNavigate()
-  const authenticated = isAuthenticated()
 
   useEffect(() => {
-    if (!authenticated) navigate('/admin/login', { replace: true })
-  }, [])
+    let active = true
+    api.getCurrentAccount()
+      .then(account => {
+        if (!active) return
+        if (account.role === 'ADMIN') setAuthorized(true)
+        else navigate('/admin/login', { replace: true })
+      })
+      .catch(() => {
+        if (active) navigate('/admin/login', { replace: true })
+      })
+    return () => { active = false }
+  }, [navigate])
 
-  if (!authenticated) return null
+  if (authorized !== true) return null
 
-  function handleLogout() {
-    logout()
-    navigate('/admin/login', { replace: true })
+  async function handleLogout() {
+    try {
+      await api.logout()
+    } finally {
+      navigate('/admin/login', { replace: true })
+    }
   }
 
   const tabs: { key: Tab; label: string }[] = [

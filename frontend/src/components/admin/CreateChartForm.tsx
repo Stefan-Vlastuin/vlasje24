@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
 import { api } from '../../api/client'
-import { useAuth } from '../../hooks/useAuth'
 import type { SongDto } from '../../types/api'
 
 const CHART_SIZE = 24
@@ -14,7 +13,6 @@ export function CreateChartForm() {
   const [status, setStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [loading, setLoading] = useState(false)
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const { getToken } = useAuth()
 
   useEffect(() => {
     if (searchQuery.length < 2) {
@@ -60,7 +58,6 @@ export function CreateChartForm() {
     try {
       const res = await api.createChart(
         { date, songIds: (slots as SongDto[]).map(s => s.songId) },
-        getToken()!,
       )
       setStatus({ type: 'success', message: `Chart aangemaakt met ID ${res.id}` })
       setDate('')

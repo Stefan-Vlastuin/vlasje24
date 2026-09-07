@@ -81,3 +81,10 @@ export interface ArtistDetailDto {
 export interface CreatedDto {
   id: number
 }
+
+export interface AccountDto {
+  userId: number
+  username: string
+  role: 'USER' | 'ADMIN'
+  emailVerified: boolean
+}

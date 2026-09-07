@@ -2,14 +2,8 @@ package nl.vlasje24.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import nl.vlasje24.config.SecurityConfig;
-import nl.vlasje24.domain.User;
-import nl.vlasje24.domain.UserRole;
-import nl.vlasje24.dto.CreatedDto;
-import nl.vlasje24.repository.UserRepository;
-import nl.vlasje24.security.JwtAuthFilter;
-import nl.vlasje24.security.JwtUtil;
+import nl.vlasje24.security.AppUserDetailsService;
 import nl.vlasje24.service.AdminService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -20,41 +14,30 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(AdminController.class)
-@Import({SecurityConfig.class, JwtAuthFilter.class})
+@Import(SecurityConfig.class)
 class AdminControllerTest {
 
     @Autowired MockMvc mockMvc;
     @Autowired ObjectMapper objectMapper;
 
     @MockBean AdminService adminService;
-    @MockBean JwtUtil jwtUtil;
-    @MockBean UserRepository userRepository;
-
-    @BeforeEach
-    void setUpAuth() {
-        when(jwtUtil.isValid("valid-token")).thenReturn(true);
-        when(jwtUtil.extractUsername("valid-token")).thenReturn("admin");
-        User admin = mock(User.class);
-        when(admin.isActive()).thenReturn(true);
-        when(admin.getRole()).thenReturn(UserRole.ADMIN);
-        when(admin.getUsername()).thenReturn("admin");
-        when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
-    }
+    @MockBean AppUserDetailsService appUserDetailsService;
 
     @Test
-    void createArtist_unauthenticated_returns403() throws Exception {
+    void createArtist_unauthenticated_returns401() throws Exception {
         mockMvc.perform(post("/api/v1/admin/artists")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of("name", "Adele"))))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -62,7 +45,8 @@ class AdminControllerTest {
         when(adminService.createArtist(any())).thenReturn(42);
 
         mockMvc.perform(post("/api/v1/admin/artists")
-                        .header("Authorization", "Bearer valid-token")
+                        .with(user("admin").roles("ADMIN"))
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of("name", "Adele"))))
                 .andExpect(status().isCreated())
@@ -80,7 +64,8 @@ class AdminControllerTest {
                 "artistIds", List.of(1));
 
         mockMvc.perform(post("/api/v1/admin/songs")
-                        .header("Authorization", "Bearer valid-token")
+                        .with(user("admin").roles("ADMIN"))
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)))
                 .andExpect(status().isCreated())
@@ -96,7 +81,8 @@ class AdminControllerTest {
         Map<String, Object> body = Map.of("date", "2024-01-08", "songIds", songIds);
 
         mockMvc.perform(post("/api/v1/admin/charts")
-                        .header("Authorization", "Bearer valid-token")
+                        .with(user("admin").roles("ADMIN"))
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)))
                 .andExpect(status().isCreated())
@@ -104,27 +90,32 @@ class AdminControllerTest {
     }
 
     @Test
-    void createSong_unauthenticated_returns403() throws Exception {
+    void createSong_unauthenticated_returns401() throws Exception {
         Map<String, Object> body = Map.of("title", "Hello", "artistIds", List.of(1));
 
         mockMvc.perform(post("/api/v1/admin/songs")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
     void createArtist_userRole_returns403() throws Exception {
-        when(jwtUtil.isValid("user-token")).thenReturn(true);
-        when(jwtUtil.extractUsername("user-token")).thenReturn("member");
-        User user = mock(User.class);
-        when(user.isActive()).thenReturn(true);
-        when(user.getRole()).thenReturn(UserRole.USER);
-        when(user.getUsername()).thenReturn("member");
-        when(userRepository.findByUsername("member")).thenReturn(Optional.of(user));
-
         mockMvc.perform(post("/api/v1/admin/artists")
-                        .header("Authorization", "Bearer user-token")
+                        .with(user("member").roles("USER"))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("name", "Adele"))))
+                .andExpect(status().isForbidden());
+
+        verifyNoInteractions(adminService);
+    }
+
+    @Test
+    void createArtist_withoutCsrf_returns403() throws Exception {
+        mockMvc.perform(post("/api/v1/admin/artists")
+                        .with(user("admin").roles("ADMIN"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of("name", "Adele"))))
                 .andExpect(status().isForbidden());

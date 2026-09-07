@@ -1,6 +1,3 @@
-jwt:
-  secret: test-secret-key-that-is-long-enough-for-hmac-sha-256-algorithm-yes
-
 spring:
   autoconfigure:
     exclude:
