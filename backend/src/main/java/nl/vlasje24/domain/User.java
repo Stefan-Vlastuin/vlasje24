@@ -62,6 +62,16 @@ public class User {
         return status == UserStatus.ACTIVE;
     }
 
+    public void verifyEmail(LocalDateTime verifiedAt) {
+        if (emailVerifiedAt == null) {
+            emailVerifiedAt = Objects.requireNonNull(verifiedAt);
+        }
+    }
+
+    public void changePassword(String encodedPassword) {
+        password = Objects.requireNonNull(encodedPassword);
+    }
+
     @PrePersist
     void initializeTimestamps() {
         LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);

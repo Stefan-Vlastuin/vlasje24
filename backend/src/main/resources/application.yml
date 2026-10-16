@@ -19,6 +19,19 @@ spring:
     timeout: ${SESSION_TIMEOUT:14d}
     jdbc:
       initialize-schema: never
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_SMTP_AUTH:false}
+          starttls:
+            enable: ${MAIL_STARTTLS_ENABLE:false}
+            required: ${MAIL_STARTTLS_REQUIRED:false}
+    test-connection: false
   jackson:
     serialization:
       write-dates-as-timestamps: false
@@ -36,5 +49,14 @@ server:
         max-age: ${SESSION_TIMEOUT:14d}
 
 app:
+  base-url: ${APP_BASE_URL:http://localhost:5173}
+  mail:
+    from: ${MAIL_FROM:Vlasje24 <accounts@vlasje24.local>}
+    reply-to: ${MAIL_REPLY_TO:developer@vlasje24.local}
+  account-token:
+    verification-validity: ${VERIFICATION_TOKEN_VALIDITY:24h}
+    reset-validity: ${RESET_TOKEN_VALIDITY:60m}
+    request-cooldown: ${ACCOUNT_MAIL_COOLDOWN:1m}
+    cleanup-retention: ${ACCOUNT_TOKEN_CLEANUP_RETENTION:7d}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost,https://vlasje24.nl,https://new.vlasje24.nl}

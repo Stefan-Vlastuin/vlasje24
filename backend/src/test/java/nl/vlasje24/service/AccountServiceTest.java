@@ -22,13 +22,14 @@ import static org.mockito.Mockito.*;
 class AccountServiceTest {
 
     @Mock UserRepository userRepository;
+    @Mock AccountTokenService accountTokenService;
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     private AccountService accountService;
 
     @BeforeEach
     void setUp() {
-        accountService = new AccountService(userRepository, passwordEncoder);
+        accountService = new AccountService(userRepository, passwordEncoder, accountTokenService);
     }
 
     @Test
@@ -46,6 +47,7 @@ class AccountServiceTest {
         assertThat(passwordEncoder.matches("a-long-password", saved.getPassword())).isTrue();
         assertThat(saved.getRole()).isEqualTo(UserRole.USER);
         assertThat(result.emailVerified()).isFalse();
+        verify(accountTokenService).issueInitialVerification(saved);
     }
 
     @Test

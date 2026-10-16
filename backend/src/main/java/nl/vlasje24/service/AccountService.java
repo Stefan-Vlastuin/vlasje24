@@ -22,6 +22,7 @@ public class AccountService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AccountTokenService accountTokenService;
 
     @Transactional
     public AccountDto register(RegisterRequestDto request) {
@@ -38,6 +39,7 @@ public class AccountService {
         try {
             User user = userRepository.saveAndFlush(
                     new User(username, email, passwordEncoder.encode(request.password())));
+            accountTokenService.issueInitialVerification(user);
             return AccountDto.from(user);
         } catch (DataIntegrityViolationException exception) {
             // A concurrent registration can pass the pre-check; the database remains authoritative.

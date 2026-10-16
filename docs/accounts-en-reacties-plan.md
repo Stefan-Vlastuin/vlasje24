@@ -1,8 +1,8 @@
 # Implementatieplan: gebruikersaccounts en reacties
 
-Status: fase 1 en 2 geïmplementeerd; fase 3 en verder gepland
+Status: fase 1, 2 en 3 geïmplementeerd; fase 4 en verder gepland
 
-Laatste inhoudelijke update: 7 september 2026
+Laatste inhoudelijke update: 16 oktober 2026
 
 Dit document is bedoeld als overdracht naar een volgende ontwikkelsessie. Het beschrijft zowel de gekozen richting als de relevante huidige situatie, migratievolgorde, API-contracten, beveiliging, e-mail, tests en uitrol.
 
@@ -70,6 +70,9 @@ De gratis limiet van Brevo is op de datum van dit document 300 e-mails per dag e
 - `backend/src/main/java/nl/vlasje24/security/AppUserDetailsService.java`
 - `backend/src/main/java/nl/vlasje24/security/AuthRateLimiter.java`
 - `backend/src/main/resources/db/migration/V3__create_spring_session_tables.sql`
+- `backend/src/main/resources/db/migration/V4__create_account_tokens.sql`
+- `backend/src/main/java/nl/vlasje24/service/AccountTokenService.java`
+- `backend/src/main/java/nl/vlasje24/service/SmtpMailService.java`
 - `frontend/src/api/client.ts`
 - `frontend/src/App.tsx`
 - `frontend/src/pages/HomePage.tsx`
@@ -303,11 +306,13 @@ Bewust gekozen directe overgang van de bestaande adminfrontend:
 3. `JwtAuthFilter`, `JwtUtil`, JJWT-dependencies, `JWT_SECRET`, bearer-tokenrespons en `vlasje24_admin_token` zijn in dezelfde release verwijderd.
 4. Bestaande sessies/JWT's blijven niet geldig. Gebruikers en admins loggen na uitrol opnieuw in; indien gewenst mogen accounts opnieuw worden aangemaakt.
 
-Registratie maakt in deze fase alleen het account aan. Omdat `account_token` en mail pas fase 3 zijn, wordt het account nog niet automatisch geverifieerd en wordt nog geen verificatiemail verstuurd.
+Bij de oorspronkelijke oplevering van fase 2 maakte registratie alleen het account aan. Sinds fase 3 wordt daarbij ook een verificatietoken aangemaakt en na commit een verificatiemail verstuurd.
 
 Klaar wanneer: USER kan niet bij `/admin/**`, ADMIN wel, logout maakt de sessie werkelijk ongeldig en de frontend bevat geen JWT meer in `localStorage`.
 
 ### Fase 3 — E-mailverificatie en wachtwoordherstel
+
+Status: geïmplementeerd.
 
 1. Voeg `account_token` via Flyway toe.
 2. Voeg `spring-boot-starter-mail` en een eigen `MailService`-interface toe.
@@ -318,6 +323,18 @@ Klaar wanneer: USER kan niet bij `/admin/**`, ADMIN wel, logout maakt de sessie 
 7. Voeg een periodieke opschoontaak toe voor verlopen/verbruikte tokens, of ruim ze bij creatie/gebruik op.
 8. Log geen ruwe tokens, wachtwoorden of volledige mailinhoud.
 
+Geïmplementeerde details:
+
+- verificatietokens zijn 24 uur geldig en resettokens 60 minuten;
+- alleen de SHA-256-hash van een cryptografisch willekeurig token wordt opgeslagen;
+- een nieuw token maakt eerdere ongebruikte tokens voor hetzelfde doel ongeldig;
+- opnieuw verzenden en wachtwoordherstel hebben per account een cooldown van één minuut;
+- onbekende e-mailadressen krijgen dezelfde `202 Accepted`-response;
+- e-mail wordt via een transactionele event listener pas na commit verstuurd;
+- wachtwoordreset verwijdert alle bestaande Spring Session-sessies van het account;
+- verlopen en verbruikte tokens worden dagelijks opgeschoond zodra ze zeven dagen oud zijn;
+- lokaal wordt Mailpit gebruikt op `http://localhost:8025`.
+
 Benodigde productievariabelen, exacte namen tijdens implementatie definitief maken:
 
 ```dotenv
@@ -325,7 +342,7 @@ MAIL_HOST=smtp-relay.brevo.com
 MAIL_PORT=587
 MAIL_USERNAME=
 MAIL_PASSWORD=
-MAIL_FROM=accounts@vlasje24.nl
+MAIL_FROM="Vlasje24 <accounts@vlasje24.nl>"
 MAIL_REPLY_TO=jouw-priveadres@example.com
 APP_BASE_URL=https://vlasje24.nl
 ```

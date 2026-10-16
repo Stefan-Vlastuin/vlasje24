@@ -54,6 +54,14 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.TOO_MANY_REQUESTS, "RATE_LIMITED", ex.getMessage());
     }
 
+    @ExceptionHandler(InvalidAccountTokenException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidAccountToken(InvalidAccountTokenException ex) {
+        if (ex.isAlreadyUsed()) {
+            return error(HttpStatus.CONFLICT, "TOKEN_USED", ex.getMessage());
+        }
+        return error(HttpStatus.BAD_REQUEST, "INVALID_TOKEN", ex.getMessage());
+    }
+
     private ResponseEntity<Map<String, Object>> error(HttpStatus status, String code, String message) {
         return ResponseEntity.status(status).body(Map.of("code", code, "message", message));
     }

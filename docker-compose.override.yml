@@ -11,8 +11,21 @@ services:
     environment:
       SESSION_COOKIE_SECURE: "false"
       CORS_ALLOWED_ORIGINS: http://localhost,http://localhost:5173
+      MAIL_HOST: mailpit
+      MAIL_PORT: "1025"
+      MAIL_USERNAME: ""
+      MAIL_PASSWORD: ""
+      MAIL_SMTP_AUTH: "false"
+      MAIL_STARTTLS_ENABLE: "false"
+      MAIL_STARTTLS_REQUIRED: "false"
+      MAIL_FROM: Vlasje24 <accounts@vlasje24.local>
+      MAIL_REPLY_TO: developer@vlasje24.local
+      APP_BASE_URL: http://localhost
     ports:
       - "8080:8080"
+    depends_on:
+      mailpit:
+        condition: service_started
 
   frontend:
     build: ./frontend
@@ -31,3 +44,10 @@ services:
     depends_on:
       db:
         condition: service_healthy
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: vlasje24-mailpit
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8025:8025"

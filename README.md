@@ -85,6 +85,7 @@ docker compose up --build
 | Website | http://localhost |
 | Backend API | http://localhost:8080/api/v1 |
 | phpMyAdmin | http://localhost:8081 |
+| Mailpit | http://localhost:8025 |
 
 ### 3. Starten zonder Docker (native)
 
@@ -200,6 +201,11 @@ Kopieer `.env.example` naar `.env` en vul alle waarden in.
 | `SESSION_TIMEOUT` | Geldigheidsduur van een inactieve sessie; standaard `14d` |
 | `SESSION_COOKIE_SECURE` | In productie `true`; lokale Docker-ontwikkeling zet dit op `false` voor HTTP |
 | `CORS_ALLOWED_ORIGINS` | Expliciete, kommagescheiden frontend-origins die cookies mogen meesturen |
+| `MAIL_HOST` / `MAIL_PORT` | SMTP-server; in productie Brevo, lokaal automatisch Mailpit |
+| `MAIL_USERNAME` / `MAIL_PASSWORD` | SMTP-inloggegevens; alleen in de VPS-`.env` invullen |
+| `MAIL_FROM` | Publieke afzender, standaard `accounts@vlasje24.nl` |
+| `MAIL_REPLY_TO` | Bestaand adres waarop gebruikers kunnen antwoorden |
+| `APP_BASE_URL` | Publieke URL voor verificatie- en resetlinks |
 | `DOMAIN` | Productiedomein zonder `https://` (bijv. `vlasje24.nl`) |
 | `DOCKER_USERNAME` | Docker Hub gebruikersnaam (voor push/pull) |
 
@@ -224,10 +230,14 @@ Alle endpoints beginnen met `/api/v1`. Publieke data is zonder account leesbaar.
 | GET | `/auth/csrf` | Initialiseer CSRF-bescherming voor mutaties |
 | POST | `/auth/register` | Maak een ongeverifieerd USER-account aan |
 | POST | `/auth/login` | Log in met gebruikersnaam of e-mailadres en start een sessie |
+| POST | `/auth/verify-email` | Verbruik een verificatietoken |
+| POST | `/auth/resend-verification` | Vraag opnieuw een verificatiemail aan |
+| POST | `/auth/forgot-password` | Vraag een wachtwoordreset aan; antwoord verraadt geen accountbestaan |
+| POST | `/auth/reset-password` | Verbruik een resettoken en beëindig bestaande sessies |
 
 Optionele query-param: `year=2024` om te filteren op jaar.
 
-Registratie heeft in fase 2 nog geen frontendpagina en verstuurt nog geen verificatiemail; dat volgt in fase 3 en 4 van het [accountplan](docs/accounts-en-reacties-plan.md).
+Registratie verstuurt lokaal een verificatiemail naar Mailpit. De registratie-, verificatie- en resetpagina's volgen in fase 4 van het [accountplan](docs/accounts-en-reacties-plan.md); tot die tijd zijn de endpoints rechtstreeks via de API te testen.
 
 ### Sessie-endpoints
 
@@ -255,6 +265,7 @@ artist       (artist_id PK, name)
 artist_of_song (song_id FK, artist_id FK, artist_order) — PK(song_id, artist_id)
 chart        (week_id FK, position, song_id FK) — PK(week_id, position)
 user         (user_id PK, username UNIQUE, password, email UNIQUE, role, status, verificatie/timestamps)
+account_token (tokenhash, doel, verloop-/verbruikstijd en FK naar user)
 SPRING_SESSION + SPRING_SESSION_ATTRIBUTES (server-side browsersessies)
 ```
 
@@ -272,6 +283,7 @@ Migraties staan in `backend/src/main/resources/db/migration` en hebben namen zoa
 V1__initial_schema.sql
 V2__expand_user_accounts.sql
 V3__create_spring_session_tables.sql
+V4__create_account_tokens.sql
 ```
 
 Wijzig een toegepaste migratie nooit; voeg voor iedere wijziging een nieuwe versie toe.

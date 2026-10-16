@@ -9,6 +9,7 @@ import nl.vlasje24.repository.UserRepository;
 import nl.vlasje24.security.AppUserDetailsService;
 import nl.vlasje24.security.AuthRateLimiter;
 import nl.vlasje24.service.AccountService;
+import nl.vlasje24.service.AccountTokenService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -24,8 +25,10 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -40,6 +43,7 @@ class AuthControllerTest {
 
     @MockBean UserRepository userRepository;
     @MockBean AccountService accountService;
+    @MockBean AccountTokenService accountTokenService;
     @MockBean AuthRateLimiter rateLimiter;
 
     private static final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
@@ -162,6 +166,47 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.fieldErrors.password").exists());
 
         verifyNoInteractions(accountService);
+    }
+
+    @Test
+    void verifyEmail_validRequest_returns204() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/verify-email")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("token", "raw-token"))))
+                .andExpect(status().isNoContent());
+
+        verify(accountTokenService).verifyEmail("raw-token");
+    }
+
+    @Test
+    void resendAndForgotPassword_doNotExposeWhetherAccountExists() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/resend-verification")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("email", "unknown@example.nl"))))
+                .andExpect(status().isAccepted())
+                .andExpect(content().string(""));
+
+        mockMvc.perform(post("/api/v1/auth/forgot-password")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("email", "unknown@example.nl"))))
+                .andExpect(status().isAccepted())
+                .andExpect(content().string(""));
+    }
+
+    @Test
+    void resetPassword_validRequest_returns204() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/reset-password")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "token", "raw-token",
+                                "password", "new-long-password"))))
+                .andExpect(status().isNoContent());
+
+        verify(accountTokenService).resetPassword(any());
     }
 
     @Test

@@ -7,12 +7,16 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import nl.vlasje24.dto.AccountDto;
 import nl.vlasje24.dto.CsrfTokenDto;
+import nl.vlasje24.dto.EmailRequestDto;
 import nl.vlasje24.dto.LoginRequestDto;
 import nl.vlasje24.dto.RegisterRequestDto;
+import nl.vlasje24.dto.ResetPasswordRequestDto;
+import nl.vlasje24.dto.TokenRequestDto;
 import nl.vlasje24.exception.InvalidCredentialsException;
 import nl.vlasje24.security.AccountPrincipal;
 import nl.vlasje24.security.AuthRateLimiter;
 import nl.vlasje24.service.AccountService;
+import nl.vlasje24.service.AccountTokenService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -36,6 +40,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AccountService accountService;
+    private final AccountTokenService accountTokenService;
     private final AuthenticationManager authenticationManager;
     private final SecurityContextRepository securityContextRepository;
     private final CsrfTokenRepository csrfTokenRepository;
@@ -53,6 +58,30 @@ public class AuthController {
             HttpServletRequest servletRequest) {
         rateLimiter.checkRegistration(servletRequest.getRemoteAddr());
         return accountService.register(request);
+    }
+
+    @PostMapping("/verify-email")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void verifyEmail(@Valid @RequestBody TokenRequestDto request) {
+        accountTokenService.verifyEmail(request.token());
+    }
+
+    @PostMapping("/resend-verification")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public void resendVerification(@Valid @RequestBody EmailRequestDto request) {
+        accountTokenService.resendVerification(request.email());
+    }
+
+    @PostMapping("/forgot-password")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public void forgotPassword(@Valid @RequestBody EmailRequestDto request) {
+        accountTokenService.requestPasswordReset(request.email());
+    }
+
+    @PostMapping("/reset-password")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void resetPassword(@Valid @RequestBody ResetPasswordRequestDto request) {
+        accountTokenService.resetPassword(request);
     }
 
     @PostMapping("/login")
