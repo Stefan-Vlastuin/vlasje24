@@ -71,4 +71,20 @@ class AccountServiceTest {
 
         verifyNoInteractions(userRepository);
     }
+
+    @Test
+    void getAccount_returnsFreshVerificationState() {
+        User user = mock(User.class);
+        when(user.isActive()).thenReturn(true);
+        when(user.getUserId()).thenReturn(7);
+        when(user.getUsername()).thenReturn("member");
+        when(user.getRole()).thenReturn(UserRole.USER);
+        when(user.isEmailVerified()).thenReturn(true);
+        when(userRepository.findById(7)).thenReturn(java.util.Optional.of(user));
+
+        var result = accountService.getAccount(7);
+
+        assertThat(result.userId()).isEqualTo(7);
+        assertThat(result.emailVerified()).isTrue();
+    }
 }

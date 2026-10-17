@@ -156,7 +156,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
 ## Admin-account aanmaken
 
-Er is nog geen registratie-UI. Een adminaccount wordt direct in de database aangemaakt. Het wachtwoord moet als BCrypt-hash worden opgeslagen.
+Gewone gebruikers kunnen zich registreren via `/register`. Een adminaccount wordt bewust direct in de database aangemaakt. Het wachtwoord moet als BCrypt-hash worden opgeslagen.
 
 ### Hash genereren
 
@@ -237,7 +237,7 @@ Alle endpoints beginnen met `/api/v1`. Publieke data is zonder account leesbaar.
 
 Optionele query-param: `year=2024` om te filteren op jaar.
 
-Registratie verstuurt lokaal een verificatiemail naar Mailpit. De registratie-, verificatie- en resetpagina's volgen in fase 4 van het [accountplan](docs/accounts-en-reacties-plan.md); tot die tijd zijn de endpoints rechtstreeks via de API te testen.
+Registratie verstuurt lokaal een verificatiemail naar Mailpit. De accountfrontend gebruikt `/register`, `/login`, `/account`, `/verify-email`, `/forgot-password` en `/reset-password`; links in de mails wijzen rechtstreeks naar de juiste pagina.
 
 ### Sessie-endpoints
 

@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { api, ApiError } from '../api/client'
+import { Navigate, useNavigate } from 'react-router-dom'
+import { ApiError } from '../api/client'
+import { useAuth } from '../auth/AuthContext'
 
 export function LoginPage() {
   const [username, setUsername] = useState('')
@@ -8,16 +9,20 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
+  const { account: currentAccount, isLoading: authLoading, login, logout } = useAuth()
+
+  if (!authLoading && currentAccount?.role === 'ADMIN') return <Navigate to="/admin" replace />
+  if (!authLoading && currentAccount) return <Navigate to="/account" replace />
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
     setLoading(true)
     try {
-      const account = await api.login(username, password)
+      const account = await login(username, password)
       if (account.role !== 'ADMIN') {
         try {
-          await api.logout()
+          await logout()
         } catch {
           // The server-side role check still protects all admin endpoints.
         }

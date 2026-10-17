@@ -21,8 +21,8 @@ export class ApiError extends Error {
 
 async function parseResponse<T>(res: Response): Promise<T> {
   if (res.ok) {
-    if (res.status === 204) return undefined as T
-    return res.json() as Promise<T>
+    const body = await res.text()
+    return (body ? JSON.parse(body) : undefined) as T
   }
 
   let error: ErrorResponse = {}
@@ -101,6 +101,14 @@ export const api = {
     mutate<AccountDto>('POST', '/auth/login', { username, password }),
   register: (data: { username: string; email: string; password: string }) =>
     mutate<AccountDto>('POST', '/auth/register', data),
+  verifyEmail: (token: string) =>
+    mutate<void>('POST', '/auth/verify-email', { token }),
+  resendVerification: (email: string) =>
+    mutate<void>('POST', '/auth/resend-verification', { email }),
+  forgotPassword: (email: string) =>
+    mutate<void>('POST', '/auth/forgot-password', { email }),
+  resetPassword: (token: string, password: string) =>
+    mutate<void>('POST', '/auth/reset-password', { token, password }),
   getCurrentAccount: () => get<AccountDto>('/auth/me'),
   logout: () => mutate<void>('POST', '/auth/logout'),
   createArtist: (name: string) =>

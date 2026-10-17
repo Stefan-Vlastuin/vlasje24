@@ -6,6 +6,7 @@ import nl.vlasje24.dto.AccountDto;
 import nl.vlasje24.dto.RegisterRequestDto;
 import nl.vlasje24.exception.AccountAlreadyExistsException;
 import nl.vlasje24.exception.InvalidAccountDataException;
+import nl.vlasje24.exception.InvalidCredentialsException;
 import nl.vlasje24.repository.UserRepository;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,6 +24,14 @@ public class AccountService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AccountTokenService accountTokenService;
+
+    @Transactional(readOnly = true)
+    public AccountDto getAccount(Integer userId) {
+        return userRepository.findById(userId)
+                .filter(User::isActive)
+                .map(AccountDto::from)
+                .orElseThrow(InvalidCredentialsException::new);
+    }
 
     @Transactional
     public AccountDto register(RegisterRequestDto request) {

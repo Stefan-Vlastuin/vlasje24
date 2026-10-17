@@ -68,20 +68,20 @@ export function SearchBar() {
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder="Zoek…"
-          className="w-44 sm:w-64 px-3 py-1.5 rounded-full bg-white/20 text-white placeholder-blue-200 border border-white/30 focus:outline-none focus:bg-white focus:text-gray-900 focus:placeholder-gray-400 transition-all text-sm"
+          className="absolute right-10 top-0 z-10 w-[calc(100vw-5rem)] max-w-64 sm:static sm:w-64 px-3 py-1.5 rounded-full bg-blue-600 sm:bg-white/20 text-white placeholder-blue-200 border border-white/30 focus:outline-none focus:bg-white focus:text-gray-900 focus:placeholder-gray-400 transition-all text-sm"
         />
       )}
 
       <button
         onClick={() => isOpen ? close() : setIsOpen(true)}
-        className="p-2 rounded-full text-white/80 hover:text-white hover:bg-white/20 transition-colors"
+        className="relative z-20 p-2 rounded-full text-white/80 hover:text-white hover:bg-white/20 transition-colors"
         aria-label={isOpen ? 'Sluiten' : 'Zoeken'}
       >
         {isOpen ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
       </button>
 
       {isOpen && showDropdown && (
-        <div className="absolute top-full right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 z-50">
+        <div className="absolute top-full right-0 mt-2 w-[min(20rem,calc(100vw-2rem))] bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 z-50">
           {!hasResults ? (
             <div className="px-4 py-4 text-sm text-gray-400 text-center">Geen resultaten gevonden</div>
           ) : (

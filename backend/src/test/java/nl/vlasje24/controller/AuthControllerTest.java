@@ -64,6 +64,8 @@ class AuthControllerTest {
         when(user.getRole()).thenReturn(UserRole.ADMIN);
         when(user.isActive()).thenReturn(true);
         when(userRepository.findByUsername("admin")).thenReturn(Optional.of(user));
+        when(accountService.getAccount(1)).thenReturn(
+                new AccountDto(1, "admin", UserRole.ADMIN, true));
 
         var result = mockMvc.perform(post("/api/v1/auth/login")
                         .with(csrf())
@@ -78,7 +80,10 @@ class AuthControllerTest {
         MockHttpSession session = (MockHttpSession) result.getRequest().getSession(false);
         mockMvc.perform(get("/api/v1/auth/me").session(session))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username").value("admin"));
+                .andExpect(jsonPath("$.username").value("admin"))
+                .andExpect(jsonPath("$.emailVerified").value(true));
+
+        verify(accountService).getAccount(1);
     }
 
     @Test

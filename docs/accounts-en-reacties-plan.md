@@ -353,6 +353,8 @@ Klaar wanneer: verificatie- en resetlinks zijn eenmalig, verlopen correct, lekke
 
 ### Fase 4 — Accountfrontend
 
+**Status: geïmplementeerd.**
+
 1. Maak registratie-, login-, verificatie-, vergeten-wachtwoord- en resetpagina's.
 2. Voeg een centrale `AuthProvider`/auth-query toe op basis van `/auth/me`.
 3. Pas de fetch-client aan met `credentials: 'include'`, CSRF-header en consistente foutafhandeling.

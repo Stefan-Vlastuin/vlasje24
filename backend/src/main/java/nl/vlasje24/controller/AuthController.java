@@ -120,8 +120,7 @@ public class AuthController {
     @GetMapping("/me")
     public AccountDto me(Authentication authentication) {
         AccountPrincipal principal = (AccountPrincipal) authentication.getPrincipal();
-        return new AccountDto(
-                principal.userId(), principal.username(), principal.role(), principal.emailVerified());
+        return accountService.getAccount(principal.userId());
     }
 
     @PostMapping("/logout")

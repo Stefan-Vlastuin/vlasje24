@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { api } from '../api/client'
+import { useState } from 'react'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { useAuth } from '../auth/AuthContext'
 import { CreateArtistForm } from '../components/admin/CreateArtistForm'
 import { CreateSongForm } from '../components/admin/CreateSongForm'
 import { CreateChartForm } from '../components/admin/CreateChartForm'
@@ -9,28 +9,18 @@ type Tab = 'artist' | 'song' | 'chart'
 
 export function AdminPage() {
   const [tab, setTab] = useState<Tab>('artist')
-  const [authorized, setAuthorized] = useState<boolean | null>(null)
+  const { account, isLoading, logout } = useAuth()
   const navigate = useNavigate()
 
-  useEffect(() => {
-    let active = true
-    api.getCurrentAccount()
-      .then(account => {
-        if (!active) return
-        if (account.role === 'ADMIN') setAuthorized(true)
-        else navigate('/admin/login', { replace: true })
-      })
-      .catch(() => {
-        if (active) navigate('/admin/login', { replace: true })
-      })
-    return () => { active = false }
-  }, [navigate])
-
-  if (authorized !== true) return null
+  if (isLoading) return <div className="min-h-screen bg-gray-50" />
+  if (!account) return <Navigate to="/admin/login" replace />
+  if (account.role !== 'ADMIN') return <Navigate to="/account" replace />
 
   async function handleLogout() {
     try {
-      await api.logout()
+      await logout()
+    } catch {
+      // AuthProvider removes the local account state even if the request fails.
     } finally {
       navigate('/admin/login', { replace: true })
     }
@@ -44,11 +34,12 @@ export function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-blue-600 text-white px-6 py-4 flex items-center justify-between">
-        <h1 className="text-xl font-bold">Vlasje24 Beheer</h1>
-        <button onClick={handleLogout} className="text-blue-100 hover:text-white text-sm">
-          Uitloggen
-        </button>
+      <div className="bg-blue-600 text-white px-6 py-4 flex items-center justify-between gap-4">
+        <Link to="/chart/latest" className="text-xl font-bold hover:text-blue-100">Vlasje24 Beheer</Link>
+        <div className="flex items-center gap-4 text-sm">
+          <Link to="/account" className="text-blue-100 hover:text-white">{account.username}</Link>
+          <button onClick={handleLogout} className="text-blue-100 hover:text-white">Uitloggen</button>
+        </div>
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-8">
