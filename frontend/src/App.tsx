@@ -13,6 +13,8 @@ import { VerifyEmailPage } from './pages/VerifyEmailPage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
 import { AccountPage } from './pages/AccountPage'
+import { PrivacyPage } from './pages/PrivacyPage'
+import { HouseRulesPage } from './pages/HouseRulesPage'
 import { AudioPlayerContext, useAudioPlayerState } from './hooks/useAudioPlayer'
 
 export default function App() {
@@ -39,6 +41,8 @@ export default function App() {
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route path="/account" element={<AccountPage />} />
+                <Route path="/privacy" element={<PrivacyPage />} />
+                <Route path="/huisregels" element={<HouseRulesPage />} />
                 <Route path="*" element={<Navigate to="/chart/latest" replace />} />
               </Routes>
             </AppShell>

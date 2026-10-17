@@ -40,4 +40,6 @@ public interface AccountTokenRepository extends JpaRepository<AccountToken, Long
                or (token.usedAt is not null and token.usedAt < :cutoff)
             """)
     int deleteExpiredOrUsedBefore(@Param("cutoff") LocalDateTime cutoff);
+
+    void deleteAllByUser(User user);
 }

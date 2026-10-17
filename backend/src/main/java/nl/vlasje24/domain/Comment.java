@@ -79,6 +79,16 @@ public class Comment {
         return status == CommentStatus.VISIBLE;
     }
 
+    public void removeForDeletedAccount() {
+        body = "[inhoud verwijderd]";
+        LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
+        if (status == CommentStatus.VISIBLE) {
+            status = CommentStatus.DELETED_BY_AUTHOR;
+            deletedAt = now;
+        }
+        updatedAt = now;
+    }
+
     @PrePersist
     void initializeTimestamps() {
         LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);

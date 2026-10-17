@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import nl.vlasje24.dto.AccountDto;
 import nl.vlasje24.dto.CsrfTokenDto;
+import nl.vlasje24.dto.DeleteAccountRequestDto;
 import nl.vlasje24.dto.EmailRequestDto;
 import nl.vlasje24.dto.LoginRequestDto;
 import nl.vlasje24.dto.RegisterRequestDto;
@@ -16,6 +17,7 @@ import nl.vlasje24.exception.InvalidCredentialsException;
 import nl.vlasje24.security.AccountPrincipal;
 import nl.vlasje24.security.AuthRateLimiter;
 import nl.vlasje24.service.AccountService;
+import nl.vlasje24.service.AccountDeletionService;
 import nl.vlasje24.service.AccountTokenService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -27,6 +29,7 @@ import org.springframework.security.web.authentication.logout.SecurityContextLog
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -40,6 +43,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AccountService accountService;
+    private final AccountDeletionService accountDeletionService;
     private final AccountTokenService accountTokenService;
     private final AuthenticationManager authenticationManager;
     private final SecurityContextRepository securityContextRepository;
@@ -131,5 +135,19 @@ public class AuthController {
             HttpServletResponse response) {
         new SecurityContextLogoutHandler().logout(request, response, authentication);
         csrfTokenRepository.saveToken(null, request, response);
+    }
+
+    @DeleteMapping("/account")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteAccount(
+            @Valid @RequestBody DeleteAccountRequestDto request,
+            Authentication authentication,
+            HttpServletRequest servletRequest,
+            HttpServletResponse servletResponse) {
+        AccountPrincipal principal = (AccountPrincipal) authentication.getPrincipal();
+        accountDeletionService.deleteAccount(principal.userId(), request.password());
+        new SecurityContextLogoutHandler().logout(
+                servletRequest, servletResponse, authentication);
+        csrfTokenRepository.saveToken(null, servletRequest, servletResponse);
     }
 }

@@ -58,5 +58,9 @@ app:
     reset-validity: ${RESET_TOKEN_VALIDITY:60m}
     request-cooldown: ${ACCOUNT_MAIL_COOLDOWN:1m}
     cleanup-retention: ${ACCOUNT_TOKEN_CLEANUP_RETENTION:7d}
+  data-retention:
+    deleted-comments: 90d
+    moderation-audit: 365d
+    cleanup-cron: "0 30 3 * * *"
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost,https://vlasje24.nl,https://new.vlasje24.nl}

@@ -1,6 +1,6 @@
 # Implementatieplan: gebruikersaccounts en reacties
 
-Status: fase 1 tot en met 6 geïmplementeerd; fase 7 gepland
+Status: fase 1 tot en met 7 geïmplementeerd; operationele productiecontroles blijven terugkerend werk
 
 Laatste inhoudelijke update: 17 oktober 2026
 
@@ -252,6 +252,7 @@ V3__create_spring_session_tables.sql
 V4__create_account_tokens.sql
 V5__create_chart_comments.sql
 V6__create_moderation_audit.sql       # pas als fase 6 dit nodig heeft
+V7__apply_data_retention.sql
 ```
 
 Controleer vóór het schrijven van iedere migratie welke versies inmiddels werkelijk bestaan; bestandsnummers mogen nooit worden hergebruikt.
@@ -405,6 +406,8 @@ Klaar wanneer: een admin misbruik kan verwijderen en een account kan blokkeren z
 
 ### Fase 7 — Privacy, beheer en productie-afwerking
 
+**Status: geïmplementeerd.**
+
 1. Publiceer privacyverklaring en korte huisregels vóór publieke registratie.
 2. Documenteer welke accountgegevens en mailmetadata Brevo verwerkt.
 3. Voeg accountverwijdering toe met recente wachtwoordbevestiging.
@@ -413,6 +416,15 @@ Klaar wanneer: een admin misbruik kan verwijderen en een account kan blokkeren z
 6. Test databaseback-up én restore inclusief gebruikers, reacties en sessies.
 7. Voeg monitoring toe voor Brevo-limiet, bounces en afzenderreputatie.
 8. Voer een dependency- en securitycheck uit vóór publieke lancering.
+
+Geïmplementeerde details:
+
+- er zijn beknopte publieke pagina's voor privacy en huisregels, gelinkt vanuit registratie en de footer;
+- een gebruiker kan het eigen account alleen verwijderen na controle van het actuele wachtwoord;
+- accountverwijdering anonimiseert gebruikersnaam, e-mailadres en wachtwoord, verwijdert tokens en sessies en wist de inhoud van alle eigen reacties;
+- verwijderde reacties worden na 90 dagen fysiek verwijderd, moderatie-auditregels na één jaar en verlopen/verbruikte tokens na zeven dagen;
+- Dependabot controleert Maven- en npm-afhankelijkheden wekelijks;
+- back-up/restore, Brevo-limiet, bounces en afzenderreputatie staan als korte terugkerende taken in `docs/productiechecklist-accounts.md` omdat deze productieaccounts en -infrastructuur vereisen.
 
 ## 8. Security-checklist
 
@@ -482,7 +494,7 @@ Aanbevolen volgorde vanaf fase 3:
 
 Voor fase 2 is bewust geen expand-and-contract-overgang gebruikt: backend en frontend moeten samen worden uitgerold. Gebruik voor toekomstige destructieve schemawijzigingen wel expand-and-contract. Een Flyway-migratie wordt niet teruggedraaid door een oud image te starten. Bij een mislukte destructieve migratie is de databaseback-up de herstelroute.
 
-## 11. Nog expliciet te bevestigen vóór implementatie
+## 11. Nog expliciet te bevestigen vóór publieke lancering
 
 Deze keuzes blokkeren het voorbereidende backendwerk niet, maar moeten vóór publieke lancering definitief zijn:
 
@@ -490,8 +502,6 @@ Deze keuzes blokkeren het voorbereidende backendwerk niet, maar moeten vóór pu
 - of de nu ingestelde sessieduur van 14 dagen later moet wijzigen;
 - mogen gebruikers hun reacties onbeperkt bewerken, of alleen binnen bijvoorbeeld 15 minuten;
 - exacte maximale reactielengte (advies: 1.000 tekens);
-- bewaartermijn voor verwijderde reacties en moderatie-auditlogs;
-- definitieve accountverwijderings- en anonimisatieregels;
 - of een aparte `MODERATOR`-rol nodig wordt; advies voor de start: alleen `USER` en `ADMIN`.
 
 ## 12. Definitie van de eerste complete release

@@ -240,12 +240,15 @@ Optionele query-param: `year=2024` om te filteren op jaar.
 
 Registratie verstuurt lokaal een verificatiemail naar Mailpit. De accountfrontend gebruikt `/register`, `/login`, `/account`, `/verify-email`, `/forgot-password` en `/reset-password`; links in de mails wijzen rechtstreeks naar de juiste pagina.
 
+De publieke routes `/privacy` en `/huisregels` beschrijven de minimale privacy-informatie en gedragsregels. Controleer vóór lancering of de contactmogelijkheid en verwerkersafspraken bij de werkelijke productie-inrichting passen.
+
 ### Sessie-endpoints
 
 | Method | Pad | Omschrijving |
 |---|---|---|
 | GET | `/auth/me` | Geef de ingelogde veilige account-DTO terug |
 | POST | `/auth/logout` | Vernietig de huidige sessie |
+| DELETE | `/auth/account` | Verwijder het eigen account na wachtwoordbevestiging; anonimiseert gegevens en reacties en beëindigt sessies |
 
 ### Reactie-endpoints (ingelogd en geverifieerd)
 
@@ -293,6 +296,8 @@ De tabel `date` bevat chartsweken; `chart` bevat de 24 posities per week. Punten
 
 Flyway maakt en migreert het schema bij het starten van de backend. Hibernate valideert het resultaat daarna (`ddl-auto: validate`).
 
+Verwijderde reacties worden automatisch na 90 dagen opgeruimd en moderatie-auditregels na één jaar. Verlopen of gebruikte accounttokens worden na zeven dagen opgeruimd. De operationele stappen voor back-ups en Brevo staan in [`docs/productiechecklist-accounts.md`](docs/productiechecklist-accounts.md).
+
 ---
 
 ## Databasemigraties
@@ -306,6 +311,7 @@ V3__create_spring_session_tables.sql
 V4__create_account_tokens.sql
 V5__create_chart_comments.sql
 V6__create_moderation_audit.sql
+V7__apply_data_retention.sql
 ```
 
 Wijzig een toegepaste migratie nooit; voeg voor iedere wijziging een nieuwe versie toe.

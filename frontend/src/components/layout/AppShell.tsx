@@ -32,7 +32,7 @@ export function AppShell({ children }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900">
+    <div className="flex min-h-screen flex-col bg-gray-50 text-gray-900">
       <header className="bg-blue-700 shadow-md sticky top-0 z-40">
         <div className="max-w-3xl mx-auto px-4">
           <div className="pt-3 flex items-center gap-3">
@@ -78,9 +78,15 @@ export function AppShell({ children }: Props) {
           </div>
         </div>
       </header>
-      <main className="max-w-3xl mx-auto px-4 py-6">
+      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6">
         {children}
       </main>
+      <footer className="border-t border-gray-200 bg-white">
+        <nav className="mx-auto flex max-w-3xl gap-4 px-4 py-4 text-sm text-gray-600" aria-label="Juridische informatie">
+          <Link to="/privacy" className="hover:text-blue-700 hover:underline">Privacy</Link>
+          <Link to="/huisregels" className="hover:text-blue-700 hover:underline">Huisregels</Link>
+        </nav>
+      </footer>
     </div>
   )
 }

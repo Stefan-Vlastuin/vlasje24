@@ -25,6 +25,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -152,5 +153,41 @@ class SessionAuthenticationIntegrationTest {
         assertThat(jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM `moderation_audit` WHERE `action` = 'USER_SUSPENDED'",
                 Integer.class)).isEqualTo(1);
+    }
+
+    @Test
+    void deletingAccountAnonymizesItAndDeletesItsPersistedSession() throws Exception {
+        var csrfResult = mockMvc.perform(get("/api/v1/auth/csrf"))
+                .andExpect(status().isOk())
+                .andReturn();
+        String csrfToken = objectMapper.readTree(csrfResult.getResponse().getContentAsString())
+                .get("token").asText();
+        var csrfCookie = csrfResult.getResponse().getCookie("XSRF-TOKEN");
+
+        var loginResult = mockMvc.perform(post("/api/v1/auth/login")
+                        .cookie(csrfCookie)
+                        .header("X-XSRF-TOKEN", csrfToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "username", "member",
+                                "password", "a-long-password"))))
+                .andExpect(status().isOk())
+                .andReturn();
+        var sessionCookie = loginResult.getResponse().getCookie("VLASJE24_SESSION");
+
+        mockMvc.perform(delete("/api/v1/auth/account")
+                        .cookie(sessionCookie, csrfCookie)
+                        .header("X-XSRF-TOKEN", csrfToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "password", "a-long-password"))))
+                .andExpect(status().isNoContent());
+
+        User deleted = userRepository.findById(memberUserId).orElseThrow();
+        assertThat(deleted.getStatus()).isEqualTo(UserStatus.DELETED);
+        assertThat(deleted.getEmail()).isNull();
+        assertThat(deleted.getUsername()).startsWith("verwijderd-" + memberUserId + "-");
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM `SPRING_SESSION`", Integer.class)).isZero();
     }
 }

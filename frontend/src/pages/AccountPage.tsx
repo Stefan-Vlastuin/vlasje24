@@ -1,16 +1,20 @@
 import { useState } from 'react'
-import { Link, Navigate, useLocation } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { api, ApiError } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 import { AccountPanel, FormError, FormSuccess, inputClass, primaryButtonClass } from '../components/account/AccountPanel'
 
 export function AccountPage() {
-  const { account, isLoading, error: authError } = useAuth()
+  const { account, isLoading, error: authError, deleteAccount } = useAuth()
   const location = useLocation()
+  const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [resendStatus, setResendStatus] = useState<'success' | 'error' | null>(null)
   const [resendMessage, setResendMessage] = useState('')
   const [sending, setSending] = useState(false)
+  const [deletePassword, setDeletePassword] = useState('')
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   if (isLoading) return <AccountPanel title="Account"><p role="status" className="text-sm text-gray-600">Account laden…</p></AccountPanel>
   if (!account && !authError) return <Navigate to="/login" replace state={{ from: location.pathname }} />
@@ -29,6 +33,24 @@ export function AccountPage() {
       setResendMessage(caught instanceof ApiError ? caught.message : 'Opnieuw verzenden lukt nu niet.')
     } finally {
       setSending(false)
+    }
+  }
+
+  async function handleDelete(event: React.FormEvent) {
+    event.preventDefault()
+    if (!window.confirm('Weet je zeker dat je je account en reacties wilt verwijderen? Dit kan niet ongedaan worden gemaakt.')) return
+
+    setDeleteError(null)
+    setDeleting(true)
+    try {
+      await deleteAccount(deletePassword)
+      navigate('/chart/latest', { replace: true })
+    } catch (caught) {
+      setDeleteError(caught instanceof ApiError && caught.status === 401
+        ? 'Het wachtwoord is niet juist.'
+        : 'Account verwijderen lukt nu niet. Probeer het later opnieuw.')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -55,6 +77,19 @@ export function AccountPage() {
       )}
 
       {account.role === 'ADMIN' && <Link to="/admin" className="mt-6 block text-center font-medium text-blue-700 hover:underline">Naar beheer</Link>}
+
+      <section className="mt-8 border-t border-gray-200 pt-6" aria-labelledby="delete-account-heading">
+        <h2 id="delete-account-heading" className="font-semibold text-gray-900">Account verwijderen</h2>
+        <p className="mt-1 text-sm leading-6 text-gray-600">Je accountgegevens en reactie-inhoud worden verwijderd. Dit kan niet ongedaan worden gemaakt.</p>
+        <form onSubmit={handleDelete} className="mt-3 space-y-3">
+          <label htmlFor="delete-password" className="text-sm font-medium text-gray-700">Bevestig met je wachtwoord</label>
+          <input id="delete-password" type="password" value={deletePassword} onChange={event => setDeletePassword(event.target.value)} required maxLength={72} autoComplete="current-password" className={inputClass} />
+          {deleteError && <FormError>{deleteError}</FormError>}
+          <button type="submit" disabled={deleting} className="w-full rounded-lg border border-red-600 px-4 py-2.5 font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50">
+            {deleting ? 'Verwijderen…' : 'Account definitief verwijderen'}
+          </button>
+        </form>
+      </section>
     </AccountPanel>
   )
 }

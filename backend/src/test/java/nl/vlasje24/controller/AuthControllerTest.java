@@ -9,6 +9,7 @@ import nl.vlasje24.repository.UserRepository;
 import nl.vlasje24.security.AppUserDetailsService;
 import nl.vlasje24.security.AuthRateLimiter;
 import nl.vlasje24.service.AccountService;
+import nl.vlasje24.service.AccountDeletionService;
 import nl.vlasje24.service.AccountTokenService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -43,6 +45,7 @@ class AuthControllerTest {
 
     @MockBean UserRepository userRepository;
     @MockBean AccountService accountService;
+    @MockBean AccountDeletionService accountDeletionService;
     @MockBean AccountTokenService accountTokenService;
     @MockBean AuthRateLimiter rateLimiter;
 
@@ -218,6 +221,23 @@ class AuthControllerTest {
     void me_withoutSession_returns401() throws Exception {
         mockMvc.perform(get("/api/v1/auth/me"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void deleteAccount_requiresPasswordAndUsesAuthenticatedAccount() throws Exception {
+        var principal = new nl.vlasje24.security.AccountPrincipal(
+                42, "member", null, UserRole.USER, true);
+        var authentication = org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+                .authenticated(principal, null, principal.getAuthorities());
+
+        mockMvc.perform(delete("/api/v1/auth/account")
+                        .with(csrf())
+                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication(authentication))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("password", "a-long-password"))))
+                .andExpect(status().isNoContent());
+
+        verify(accountDeletionService).deleteAccount(42, "a-long-password");
     }
 
     @Test

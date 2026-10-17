@@ -77,5 +77,9 @@ class UserAccountMigrationTest {
                 "SELECT COUNT(*) FROM information_schema.tables " +
                         "WHERE table_schema = DATABASE() AND table_name = 'moderation_audit'", Integer.class))
                 .isEqualTo(1);
+        assertThat(jdbc.queryForObject(
+                "SELECT DELETE_RULE FROM information_schema.referential_constraints " +
+                        "WHERE constraint_schema = DATABASE() AND constraint_name = 'fk_moderation_audit_comment'",
+                String.class)).isEqualTo("SET NULL");
     }
 }

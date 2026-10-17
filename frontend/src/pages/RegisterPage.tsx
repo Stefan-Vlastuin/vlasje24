@@ -97,6 +97,7 @@ export function RegisterPage() {
           <input id="register-confirmation" type="password" value={confirmation} onChange={event => setConfirmation(event.target.value)} required minLength={12} autoComplete="new-password" className={inputClass} />
         </div>
         {error && <FormError>{error}</FormError>}
+        <p className="text-xs leading-5 text-gray-500">Door een account te maken ga je akkoord met de <Link to="/huisregels" className="text-blue-700 hover:underline">huisregels</Link> en lees je hoe Vlasje24 je gegevens verwerkt in de <Link to="/privacy" className="text-blue-700 hover:underline">privacyverklaring</Link>.</p>
         <button type="submit" disabled={loading} className={primaryButtonClass}>{loading ? 'Account maken…' : 'Account maken'}</button>
       </form>
       <p className="mt-5 text-center text-sm text-gray-600">Al een account? <Link to="/login" className="font-medium text-blue-700 hover:underline">Inloggen</Link></p>

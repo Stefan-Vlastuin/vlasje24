@@ -80,6 +80,17 @@ public class User {
         status = UserStatus.ACTIVE;
     }
 
+    public void deleteAccount(String anonymousUsername, String unusableEncodedPassword) {
+        if (userId == null) {
+            throw new IllegalStateException("Alleen een opgeslagen account kan worden verwijderd");
+        }
+        username = Objects.requireNonNull(anonymousUsername);
+        email = null;
+        emailVerifiedAt = null;
+        password = Objects.requireNonNull(unusableEncodedPassword);
+        status = UserStatus.DELETED;
+    }
+
     @PrePersist
     void initializeTimestamps() {
         LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);

@@ -119,6 +119,8 @@ export const api = {
     mutate<void>('POST', '/auth/reset-password', { token, password }),
   getCurrentAccount: () => get<AccountDto>('/auth/me'),
   logout: () => mutate<void>('POST', '/auth/logout'),
+  deleteAccount: (password: string) =>
+    mutate<void>('DELETE', '/auth/account', { password }),
   createArtist: (name: string) =>
     mutate<CreatedDto>('POST', '/admin/artists', { name }),
   createSong: (data: { title: string; imageUrl: string; previewUrl: string; artistIds: number[] }) =>

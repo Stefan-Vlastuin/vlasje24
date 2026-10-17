@@ -11,6 +11,7 @@ interface AuthContextValue {
   error: Error | null
   login: (identifier: string, password: string) => Promise<AccountDto>
   logout: () => Promise<void>
+  deleteAccount: (password: string) => Promise<void>
   refresh: () => Promise<void>
 }
 
@@ -45,6 +46,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [queryClient])
 
+  const deleteAccount = useCallback(async (password: string) => {
+    await api.deleteAccount(password)
+    queryClient.setQueryData(AUTH_QUERY_KEY, null)
+  }, [queryClient])
+
   const refresh = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEY })
   }, [queryClient])
@@ -56,6 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       error: query.error,
       login,
       logout,
+      deleteAccount,
       refresh,
     }}>
       {children}
