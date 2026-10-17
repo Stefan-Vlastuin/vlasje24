@@ -72,6 +72,14 @@ public class User {
         password = Objects.requireNonNull(encodedPassword);
     }
 
+    public void suspend() {
+        status = UserStatus.SUSPENDED;
+    }
+
+    public void reactivate() {
+        status = UserStatus.ACTIVE;
+    }
+
     @PrePersist
     void initializeTimestamps() {
         LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);

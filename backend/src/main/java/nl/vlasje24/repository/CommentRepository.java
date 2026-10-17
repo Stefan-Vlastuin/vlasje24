@@ -8,8 +8,13 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
+import java.util.Collection;
 
 public interface CommentRepository extends JpaRepository<Comment, Long> {
+
+    @Override
+    @EntityGraph(attributePaths = {"author", "chartWeek"})
+    Page<Comment> findAll(Pageable pageable);
 
     @EntityGraph(attributePaths = "author")
     Page<Comment> findByChartWeekWeekIdAndStatus(
@@ -20,4 +25,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     @Override
     @EntityGraph(attributePaths = {"author", "chartWeek"})
     Optional<Comment> findById(Long commentId);
+
+    @EntityGraph(attributePaths = {"author", "chartWeek"})
+    Page<Comment> findByStatusIn(Collection<CommentStatus> statuses, Pageable pageable);
 }

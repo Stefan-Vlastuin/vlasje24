@@ -1,6 +1,6 @@
 # Implementatieplan: gebruikersaccounts en reacties
 
-Status: fase 1 tot en met 5 geïmplementeerd; fase 6 en verder gepland
+Status: fase 1 tot en met 6 geïmplementeerd; fase 7 gepland
 
 Laatste inhoudelijke update: 17 oktober 2026
 
@@ -382,12 +382,24 @@ Klaar wanneer: publieke bezoekers kunnen lezen, alleen toegestane accounts kunne
 
 ### Fase 6 — Moderatie en misbruikbeperking
 
+**Status: geïmplementeerd.**
+
 1. Voeg adminoverzicht toe voor recente/verwijderde reacties.
 2. Laat admins reacties soft-deleten met optionele interne reden.
 3. Laat admins accounts suspenderen en alle sessies daarvan beëindigen.
 4. Voeg auditlogging toe voor moderatieacties.
 5. Voeg indien nodig een rapporteerfunctie toe; niet nodig voor de eerste kleinschalige release.
 6. Monitor 4xx/5xx, mislukte mailaflevering en rate-limit-events zonder gevoelige inhoud te loggen.
+
+Geïmplementeerde details:
+
+- het adminpaneel bevat gepagineerde overzichten voor alle, zichtbare en verwijderde reacties;
+- admins kunnen reacties soft-deleten met een optionele interne reden van maximaal 500 tekens;
+- gewone accounts kunnen worden geblokkeerd en gedeblokkeerd; blokkeren beëindigt alle bestaande sessies;
+- admins kunnen zichzelf en andere adminaccounts niet via dit scherm blokkeren;
+- iedere commentverwijdering door een admin en iedere accountstatuswijziging krijgt een auditregel;
+- de auditlog en interne redenen zijn alleen via adminendpoints zichtbaar;
+- 4xx-, 5xx-, rate-limit- en mislukte mailgebeurtenissen worden gelogd zonder requestbody, querystring, tokens of mailinhoud.
 
 Klaar wanneer: een admin misbruik kan verwijderen en een account kan blokkeren zonder directe database-ingreep.
 

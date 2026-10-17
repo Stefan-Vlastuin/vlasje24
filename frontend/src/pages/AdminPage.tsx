@@ -4,8 +4,9 @@ import { useAuth } from '../auth/AuthContext'
 import { CreateArtistForm } from '../components/admin/CreateArtistForm'
 import { CreateSongForm } from '../components/admin/CreateSongForm'
 import { CreateChartForm } from '../components/admin/CreateChartForm'
+import { AdminModerationPanel } from '../components/admin/AdminModerationPanel'
 
-type Tab = 'artist' | 'song' | 'chart'
+type Tab = 'artist' | 'song' | 'chart' | 'moderation'
 
 export function AdminPage() {
   const [tab, setTab] = useState<Tab>('artist')
@@ -30,6 +31,7 @@ export function AdminPage() {
     { key: 'artist', label: 'Artiest toevoegen' },
     { key: 'song', label: 'Nummer toevoegen' },
     { key: 'chart', label: 'Chart toevoegen' },
+    { key: 'moderation', label: 'Moderatie' },
   ]
 
   return (
@@ -42,8 +44,8 @@ export function AdminPage() {
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        <div className="flex gap-2 mb-6">
+      <div className="max-w-5xl mx-auto px-4 py-8">
+        <div className="flex flex-wrap gap-2 mb-6">
           {tabs.map(t => (
             <button
               key={t.key}
@@ -63,6 +65,7 @@ export function AdminPage() {
           {tab === 'artist' && <CreateArtistForm />}
           {tab === 'song' && <CreateSongForm />}
           {tab === 'chart' && <CreateChartForm />}
+          {tab === 'moderation' && <AdminModerationPanel />}
         </div>
       </div>
     </div>

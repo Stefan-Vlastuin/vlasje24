@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import nl.vlasje24.domain.ChartWeek;
 import nl.vlasje24.domain.Comment;
 import nl.vlasje24.domain.CommentStatus;
+import nl.vlasje24.domain.ModerationAction;
+import nl.vlasje24.domain.ModerationAudit;
 import nl.vlasje24.domain.User;
 import nl.vlasje24.domain.UserRole;
 import nl.vlasje24.dto.CommentDto;
@@ -13,6 +15,7 @@ import nl.vlasje24.exception.EmailNotVerifiedException;
 import nl.vlasje24.exception.NotFoundException;
 import nl.vlasje24.repository.ChartWeekRepository;
 import nl.vlasje24.repository.CommentRepository;
+import nl.vlasje24.repository.ModerationAuditRepository;
 import nl.vlasje24.repository.UserRepository;
 import nl.vlasje24.security.CommentRateLimiter;
 import org.springframework.data.domain.PageRequest;
@@ -27,6 +30,7 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final ChartWeekRepository chartWeekRepository;
     private final UserRepository userRepository;
+    private final ModerationAuditRepository moderationAuditRepository;
     private final CommentRateLimiter rateLimiter;
 
     @Transactional(readOnly = true)
@@ -65,8 +69,17 @@ public class CommentService {
         User actor = requireWriter(userId);
         Comment comment = requireVisibleComment(commentId);
         requireOwnerOrAdmin(comment, actor);
-        comment.softDelete(actor.getRole() == UserRole.ADMIN
-                && !comment.getAuthor().getUserId().equals(actor.getUserId()));
+        boolean deletedByModerator = actor.getRole() == UserRole.ADMIN
+                && !comment.getAuthor().getUserId().equals(actor.getUserId());
+        comment.softDelete(deletedByModerator);
+        if (deletedByModerator) {
+            moderationAuditRepository.save(new ModerationAudit(
+                    actor,
+                    ModerationAction.COMMENT_DELETED,
+                    comment,
+                    comment.getAuthor(),
+                    null));
+        }
     }
 
     private User requireWriter(Integer userId) {

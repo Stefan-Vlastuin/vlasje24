@@ -264,6 +264,13 @@ Plaatsen is per gebruiker begrensd op 5 reacties per minuut en 30 per uur. Lezen
 | POST | `/admin/artists` | `{ "name": "..." }` |
 | POST | `/admin/songs` | `{ "title", "imageUrl", "previewUrl", "artistIds": [1, 2] }` |
 | POST | `/admin/charts` | `{ "date": "2024-01-01", "songIds": [1..24] }` (exact 24 nummers) |
+| GET | `/admin/comments?status=ALL&page=0&size=20` | Recente zichtbare en verwijderde reacties (`ALL`, `VISIBLE`, `DELETED`) |
+| DELETE | `/admin/comments/{commentId}` | Soft-delete met optionele `{ "reason": "..." }` |
+| GET | `/admin/users?query=&page=0&size=20` | Accounts zoeken en pagineren |
+| PATCH | `/admin/users/{userId}/suspension` | `{ "suspended": true, "reason": "..." }`; sessies worden bij blokkeren beëindigd |
+| GET | `/admin/moderation-audit?page=0&size=20` | Interne auditlog van moderatieacties |
+
+Het beheeronderdeel **Moderatie** biedt dezelfde functies via de frontend. Interne redenen zijn maximaal 500 tekens en worden nooit publiek getoond. Adminaccounts kunnen niet vanuit dit scherm worden geblokkeerd.
 
 ---
 
@@ -278,6 +285,7 @@ chart        (week_id FK, position, song_id FK) — PK(week_id, position)
 user         (user_id PK, username UNIQUE, password, email UNIQUE, role, status, verificatie/timestamps)
 account_token (tokenhash, doel, verloop-/verbruikstijd en FK naar user)
 comment      (chartweek/auteur-FK, platte tekst, status en timestamps)
+moderation_audit (admin, actie, doel, optionele interne reden en tijdstip)
 SPRING_SESSION + SPRING_SESSION_ATTRIBUTES (server-side browsersessies)
 ```
 
@@ -297,6 +305,7 @@ V2__expand_user_accounts.sql
 V3__create_spring_session_tables.sql
 V4__create_account_tokens.sql
 V5__create_chart_comments.sql
+V6__create_moderation_audit.sql
 ```
 
 Wijzig een toegepaste migratie nooit; voeg voor iedere wijziging een nieuwe versie toe.

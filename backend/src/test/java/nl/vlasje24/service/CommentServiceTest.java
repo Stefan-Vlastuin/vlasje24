@@ -11,6 +11,7 @@ import nl.vlasje24.exception.EmailNotVerifiedException;
 import nl.vlasje24.exception.NotFoundException;
 import nl.vlasje24.repository.ChartWeekRepository;
 import nl.vlasje24.repository.CommentRepository;
+import nl.vlasje24.repository.ModerationAuditRepository;
 import nl.vlasje24.repository.UserRepository;
 import nl.vlasje24.security.CommentRateLimiter;
 import org.junit.jupiter.api.Test;
@@ -43,6 +44,7 @@ class CommentServiceTest {
     @Mock CommentRepository commentRepository;
     @Mock ChartWeekRepository chartWeekRepository;
     @Mock UserRepository userRepository;
+    @Mock ModerationAuditRepository moderationAuditRepository;
     @Mock CommentRateLimiter rateLimiter;
 
     @InjectMocks CommentService commentService;
@@ -138,6 +140,7 @@ class CommentServiceTest {
         commentService.deleteComment(1L, 10);
 
         verify(comment).softDelete(true);
+        verify(moderationAuditRepository).save(any());
         verify(commentRepository, never()).delete(any());
     }
 

@@ -1,6 +1,8 @@
 package nl.vlasje24.exception;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -11,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(NotFoundException.class)
@@ -51,8 +54,17 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(TooManyRequestsException.class)
-    public ResponseEntity<Map<String, Object>> handleTooManyRequests(TooManyRequestsException ex) {
+    public ResponseEntity<Map<String, Object>> handleTooManyRequests(
+            TooManyRequestsException ex,
+            HttpServletRequest request) {
+        log.warn("Rate limit bereikt (methode={}, pad={})",
+                request.getMethod(), request.getRequestURI());
         return error(HttpStatus.TOO_MANY_REQUESTS, "RATE_LIMITED", ex.getMessage());
+    }
+
+    @ExceptionHandler(ModerationConflictException.class)
+    public ResponseEntity<Map<String, Object>> handleModerationConflict(ModerationConflictException ex) {
+        return error(HttpStatus.CONFLICT, "MODERATION_CONFLICT", ex.getMessage());
     }
 
     @ExceptionHandler(EmailNotVerifiedException.class)

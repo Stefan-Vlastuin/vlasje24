@@ -106,3 +106,64 @@ export interface CommentPageDto {
   totalElements: number
   totalPages: number
 }
+
+export type CommentStatus = 'VISIBLE' | 'DELETED_BY_AUTHOR' | 'DELETED_BY_MODERATOR'
+export type UserStatus = 'ACTIVE' | 'SUSPENDED' | 'DELETED'
+export type ModerationAction = 'COMMENT_DELETED' | 'USER_SUSPENDED' | 'USER_REACTIVATED'
+
+export interface AdminCommentDto {
+  commentId: number
+  chartWeekId: number
+  authorId: number
+  username: string
+  body: string
+  status: CommentStatus
+  createdAt: string
+  updatedAt: string
+  deletedAt: string | null
+}
+
+export interface AdminCommentPageDto {
+  comments: AdminCommentDto[]
+  page: number
+  size: number
+  totalElements: number
+  totalPages: number
+}
+
+export interface AdminUserDto {
+  userId: number
+  username: string
+  role: 'USER' | 'ADMIN'
+  status: UserStatus
+  emailVerified: boolean
+  createdAt: string
+}
+
+export interface AdminUserPageDto {
+  users: AdminUserDto[]
+  page: number
+  size: number
+  totalElements: number
+  totalPages: number
+}
+
+export interface ModerationAuditDto {
+  auditId: number
+  adminUserId: number
+  adminUsername: string
+  action: ModerationAction
+  targetCommentId: number | null
+  targetUserId: number
+  targetUsername: string
+  reason: string | null
+  createdAt: string
+}
+
+export interface ModerationAuditPageDto {
+  actions: ModerationAuditDto[]
+  page: number
+  size: number
+  totalElements: number
+  totalPages: number
+}

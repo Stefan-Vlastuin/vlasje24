@@ -1,4 +1,4 @@
-import type { AccountDto, ArtistDetailDto, ChartDto, CommentDto, CommentPageDto, CreatedDto, SearchResultDto, SongDetailDto, TopArtistsPageDto, TopSongsPageDto } from '../types/api'
+import type { AccountDto, AdminCommentPageDto, AdminUserDto, AdminUserPageDto, ArtistDetailDto, ChartDto, CommentDto, CommentPageDto, CreatedDto, ModerationAuditPageDto, SearchResultDto, SongDetailDto, TopArtistsPageDto, TopSongsPageDto } from '../types/api'
 
 const BASE_URL = '/api/v1'
 
@@ -125,4 +125,16 @@ export const api = {
     mutate<CreatedDto>('POST', '/admin/songs', data),
   createChart: (data: { date: string; songIds: number[] }) =>
     mutate<CreatedDto>('POST', '/admin/charts', data),
+  getAdminComments: (status: 'ALL' | 'VISIBLE' | 'DELETED', page: number, size = 20) =>
+    get<AdminCommentPageDto>(`/admin/comments?status=${status}&page=${page}&size=${size}`),
+  moderateComment: (commentId: number, reason: string) =>
+    mutate<void>('DELETE', `/admin/comments/${commentId}`, { reason }),
+  getAdminUsers: (query: string, page: number, size = 20) => {
+    const params = new URLSearchParams({ query, page: String(page), size: String(size) })
+    return get<AdminUserPageDto>(`/admin/users?${params}`)
+  },
+  updateUserSuspension: (userId: number, suspended: boolean, reason: string) =>
+    mutate<AdminUserDto>('PATCH', `/admin/users/${userId}/suspension`, { suspended, reason }),
+  getModerationAudit: (page: number, size = 20) =>
+    get<ModerationAuditPageDto>(`/admin/moderation-audit?page=${page}&size=${size}`),
 }

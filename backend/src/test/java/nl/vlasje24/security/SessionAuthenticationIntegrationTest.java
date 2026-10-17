@@ -3,7 +3,9 @@ package nl.vlasje24.security;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import nl.vlasje24.domain.User;
+import nl.vlasje24.domain.UserStatus;
 import nl.vlasje24.repository.UserRepository;
+import nl.vlasje24.service.AdminModerationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,12 +58,23 @@ class SessionAuthenticationIntegrationTest {
     @Autowired UserRepository userRepository;
     @Autowired PasswordEncoder passwordEncoder;
     @Autowired JdbcTemplate jdbcTemplate;
+    @Autowired AdminModerationService moderationService;
+
+    private Integer adminUserId;
+    private Integer memberUserId;
 
     @BeforeEach
     void createAccount() {
+        jdbcTemplate.update("DELETE FROM `moderation_audit`");
         userRepository.deleteAll();
-        userRepository.saveAndFlush(new User(
+        User admin = userRepository.saveAndFlush(new User(
+                "admin", "admin@example.nl", passwordEncoder.encode("an-admin-password")));
+        adminUserId = admin.getUserId();
+        jdbcTemplate.update("UPDATE `user` SET `role` = 'ADMIN' WHERE `user_id` = ?", adminUserId);
+
+        User member = userRepository.saveAndFlush(new User(
                 "member", "member@example.nl", passwordEncoder.encode("a-long-password")));
+        memberUserId = member.getUserId();
     }
 
     @Test
@@ -105,5 +118,39 @@ class SessionAuthenticationIntegrationTest {
                 .andExpect(status().isNoContent());
         assertThat(jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM `SPRING_SESSION`", Integer.class)).isZero();
+    }
+
+    @Test
+    void suspendingAccountDeletesItsPersistedSessions() throws Exception {
+        var csrfResult = mockMvc.perform(get("/api/v1/auth/csrf"))
+                .andExpect(status().isOk())
+                .andReturn();
+        JsonNode csrfBody = objectMapper.readTree(csrfResult.getResponse().getContentAsString());
+        String csrfToken = csrfBody.get("token").asText();
+        var csrfCookie = csrfResult.getResponse().getCookie("XSRF-TOKEN");
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .cookie(csrfCookie)
+                        .header("X-XSRF-TOKEN", csrfToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "username", "member",
+                                "password", "a-long-password"))))
+                .andExpect(status().isOk());
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM `SPRING_SESSION` WHERE `PRINCIPAL_NAME` = 'member'",
+                Integer.class)).isEqualTo(1);
+
+        moderationService.updateSuspension(
+                memberUserId, adminUserId, true, "Integratietest");
+
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM `SPRING_SESSION` WHERE `PRINCIPAL_NAME` = 'member'",
+                Integer.class)).isZero();
+        assertThat(userRepository.findById(memberUserId).orElseThrow().getStatus())
+                .isEqualTo(UserStatus.SUSPENDED);
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM `moderation_audit` WHERE `action` = 'USER_SUSPENDED'",
+                Integer.class)).isEqualTo(1);
     }
 }
