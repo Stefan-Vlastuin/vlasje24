@@ -1,5 +1,6 @@
 package nl.vlasje24.exception;
 
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -52,6 +53,21 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(TooManyRequestsException.class)
     public ResponseEntity<Map<String, Object>> handleTooManyRequests(TooManyRequestsException ex) {
         return error(HttpStatus.TOO_MANY_REQUESTS, "RATE_LIMITED", ex.getMessage());
+    }
+
+    @ExceptionHandler(EmailNotVerifiedException.class)
+    public ResponseEntity<Map<String, Object>> handleEmailNotVerified(EmailNotVerifiedException ex) {
+        return error(HttpStatus.FORBIDDEN, "EMAIL_NOT_VERIFIED", ex.getMessage());
+    }
+
+    @ExceptionHandler(CommentAccessDeniedException.class)
+    public ResponseEntity<Map<String, Object>> handleCommentAccessDenied(CommentAccessDeniedException ex) {
+        return error(HttpStatus.FORBIDDEN, "FORBIDDEN", ex.getMessage());
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleConstraintViolation(ConstraintViolationException ex) {
+        return error(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "Ongeldige paginering");
     }
 
     @ExceptionHandler(InvalidAccountTokenException.class)

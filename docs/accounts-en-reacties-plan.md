@@ -1,8 +1,8 @@
 # Implementatieplan: gebruikersaccounts en reacties
 
-Status: fase 1, 2 en 3 geïmplementeerd; fase 4 en verder gepland
+Status: fase 1 tot en met 5 geïmplementeerd; fase 6 en verder gepland
 
-Laatste inhoudelijke update: 16 oktober 2026
+Laatste inhoudelijke update: 17 oktober 2026
 
 Dit document is bedoeld als overdracht naar een volgende ontwikkelsessie. Het beschrijft zowel de gekozen richting als de relevante huidige situatie, migratievolgorde, API-contracten, beveiliging, e-mail, tests en uitrol.
 
@@ -366,6 +366,8 @@ Klaar wanneer: verificatie- en resetlinks zijn eenmalig, verlopen correct, lekke
 Klaar wanneer: registratie tot verificatie werkt op mobiel en desktop, een refresh de sessie behoudt en adminnavigatie alleen voor ADMIN zichtbaar/toegankelijk is.
 
 ### Fase 5 — Chartreacties
+
+**Status: geïmplementeerd.**
 
 1. Voeg `comment` en indexen via Flyway toe.
 2. Implementeer entity, repository, service, DTO's en endpoints.

@@ -69,5 +69,9 @@ class UserAccountMigrationTest {
                 "SELECT COUNT(*) FROM information_schema.tables " +
                         "WHERE table_schema = DATABASE() AND table_name = 'account_token'", Integer.class))
                 .isEqualTo(1);
+        assertThat(jdbc.queryForObject(
+                "SELECT COUNT(*) FROM information_schema.tables " +
+                        "WHERE table_schema = DATABASE() AND table_name = 'comment'", Integer.class))
+                .isEqualTo(1);
     }
 }

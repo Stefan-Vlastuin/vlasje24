@@ -221,6 +221,7 @@ Alle endpoints beginnen met `/api/v1`. Publieke data is zonder account leesbaar.
 |---|---|---|
 | GET | `/charts/latest` | Meest recente chart |
 | GET | `/charts/{weekId}` | Specifieke chartweek |
+| GET | `/charts/{weekId}/comments?page=0&size=20` | Zichtbare reacties, nieuwste eerst (maximaal 50 per pagina) |
 | GET | `/charts/years` | Lijst van jaren met chartdata |
 | GET | `/songs/{songId}` | Nummerdetails + charthistorie |
 | GET | `/songs/top?sort=points&page=0` | Top-nummers (sort: `points`, `weeks`, `position`) |
@@ -246,6 +247,16 @@ Registratie verstuurt lokaal een verificatiemail naar Mailpit. De accountfronten
 | GET | `/auth/me` | Geef de ingelogde veilige account-DTO terug |
 | POST | `/auth/logout` | Vernietig de huidige sessie |
 
+### Reactie-endpoints (ingelogd en geverifieerd)
+
+| Method | Pad | Omschrijving |
+|---|---|---|
+| POST | `/charts/{weekId}/comments` | Plaats een plattetekstreactie van maximaal 1.000 tekens |
+| PATCH | `/comments/{commentId}` | Bewerk een eigen reactie; admins mogen iedere reactie beheren |
+| DELETE | `/comments/{commentId}` | Verwijder een reactie met soft-delete |
+
+Plaatsen is per gebruiker begrensd op 5 reacties per minuut en 30 per uur. Lezen blijft publiek.
+
 ### Admin-endpoints (`ADMIN`-rol vereist)
 
 | Method | Pad | Body |
@@ -266,6 +277,7 @@ artist_of_song (song_id FK, artist_id FK, artist_order) — PK(song_id, artist_i
 chart        (week_id FK, position, song_id FK) — PK(week_id, position)
 user         (user_id PK, username UNIQUE, password, email UNIQUE, role, status, verificatie/timestamps)
 account_token (tokenhash, doel, verloop-/verbruikstijd en FK naar user)
+comment      (chartweek/auteur-FK, platte tekst, status en timestamps)
 SPRING_SESSION + SPRING_SESSION_ATTRIBUTES (server-side browsersessies)
 ```
 
@@ -284,6 +296,7 @@ V1__initial_schema.sql
 V2__expand_user_accounts.sql
 V3__create_spring_session_tables.sql
 V4__create_account_tokens.sql
+V5__create_chart_comments.sql
 ```
 
 Wijzig een toegepaste migratie nooit; voeg voor iedere wijziging een nieuwe versie toe.

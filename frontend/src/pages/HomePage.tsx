@@ -4,6 +4,7 @@ import { api } from '../api/client'
 import { ChartHeader } from '../components/chart/ChartHeader'
 import { ChartEntryRow } from '../components/chart/ChartEntryRow'
 import { ExitedSongs } from '../components/chart/ExitedSongs'
+import { ChartComments } from '../components/chart/ChartComments'
 
 export function HomePage() {
   const { weekId } = useParams<{ weekId: string }>()
@@ -45,6 +46,8 @@ export function HomePage() {
       </div>
 
       <ExitedSongs songs={data.exitedSongs} />
+
+      <ChartComments key={data.weekId} weekId={data.weekId} />
     </div>
   )
 }

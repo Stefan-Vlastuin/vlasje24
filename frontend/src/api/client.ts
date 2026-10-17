@@ -1,4 +1,4 @@
-import type { AccountDto, ArtistDetailDto, ChartDto, CreatedDto, SearchResultDto, SongDetailDto, TopArtistsPageDto, TopSongsPageDto } from '../types/api'
+import type { AccountDto, ArtistDetailDto, ChartDto, CommentDto, CommentPageDto, CreatedDto, SearchResultDto, SongDetailDto, TopArtistsPageDto, TopSongsPageDto } from '../types/api'
 
 const BASE_URL = '/api/v1'
 
@@ -83,6 +83,14 @@ async function mutate<T>(method: 'POST' | 'PATCH' | 'DELETE', path: string, body
 export const api = {
   getLatestChart: () => get<ChartDto>('/charts/latest'),
   getChart: (weekId: number) => get<ChartDto>(`/charts/${weekId}`),
+  getComments: (weekId: number, page: number, size = 20) =>
+    get<CommentPageDto>(`/charts/${weekId}/comments?page=${page}&size=${size}`),
+  createComment: (weekId: number, body: string) =>
+    mutate<CommentDto>('POST', `/charts/${weekId}/comments`, { body }),
+  editComment: (commentId: number, body: string) =>
+    mutate<CommentDto>('PATCH', `/comments/${commentId}`, { body }),
+  deleteComment: (commentId: number) =>
+    mutate<void>('DELETE', `/comments/${commentId}`),
   getSong: (songId: number) => get<SongDetailDto>(`/songs/${songId}`),
   getArtist: (artistId: number) => get<ArtistDetailDto>(`/artists/${artistId}`),
   search: (q: string) => get<SearchResultDto>(`/search?q=${encodeURIComponent(q)}`),

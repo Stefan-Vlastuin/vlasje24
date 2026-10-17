@@ -88,3 +88,21 @@ export interface AccountDto {
   role: 'USER' | 'ADMIN'
   emailVerified: boolean
 }
+
+export interface CommentDto {
+  commentId: number
+  authorId: number
+  username: string
+  body: string
+  createdAt: string
+  updatedAt: string
+  edited: boolean
+}
+
+export interface CommentPageDto {
+  comments: CommentDto[]
+  page: number
+  size: number
+  totalElements: number
+  totalPages: number
+}
