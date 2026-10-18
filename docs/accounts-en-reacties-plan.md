@@ -457,6 +457,18 @@ Uitgevoerde hardening:
 
 ## 9. Teststrategie
 
+Status: de automatiseerbare controles zijn ingericht. De volledige backendsuite bevat 108 tests en gebruikt waar nodig MySQL- en Mailpit-containers; de frontend bevat 15 Vitest/Testing Library-tests. De productiesmoke-test en een visuele controle van de mobiele layout blijven bewust handmatig, omdat die afhankelijk zijn van de werkelijk uitgerolde omgeving, DNS/mailreputatie en CSS-rendering in een echte browser.
+
+Aanvullend afgedekt bij de controle van dit hoofdstuk:
+
+- verlopen, verbruikte en vervangen wachtwoordresettokens;
+- suspended accounts en eigenaar-/adminrechten bij reacties;
+- PATCH/DELETE-controllerkoppeling en CSRF bij verwijderen;
+- filtering van soft-deleted reacties tegen een echte MySQL-database;
+- SMTP-aflevering tegen een echte tijdelijke Mailpit-server;
+- centrale frontend-authstatus, accountflows en de verschillende reactiestaten;
+- zichtbaarheid van beheeracties en toetsenbordbediening van het reactieformulier.
+
 ### Backend-integratietests
 
 - registratie geldig/ongeldig/dubbel;

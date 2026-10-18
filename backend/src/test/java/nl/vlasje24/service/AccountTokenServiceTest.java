@@ -135,6 +135,31 @@ class AccountTokenServiceTest {
     }
 
     @Test
+    void requestPasswordReset_replacesPreviousUnusedToken() {
+        User user = new User("member", "member@example.nl", "hash");
+        AccountToken previousToken = new AccountToken(
+                user,
+                AccountTokenPurpose.PASSWORD_RESET,
+                "b".repeat(64),
+                LocalDateTime.ofInstant(NOW.plus(Duration.ofMinutes(30)), ZoneOffset.UTC),
+                LocalDateTime.ofInstant(NOW.minus(Duration.ofMinutes(2)), ZoneOffset.UTC));
+        when(userRepository.findByEmailIgnoreCase("member@example.nl"))
+                .thenReturn(Optional.of(user));
+        when(tokenRepository.findFirstByUserAndPurposeOrderByCreatedAtDesc(
+                user, AccountTokenPurpose.PASSWORD_RESET))
+                .thenReturn(Optional.of(previousToken));
+
+        service.requestPasswordReset("member@example.nl");
+
+        verify(tokenRepository).invalidateUnused(
+                eq(user), eq(AccountTokenPurpose.PASSWORD_RESET), any(LocalDateTime.class));
+        ArgumentCaptor<AccountToken> tokenCaptor = ArgumentCaptor.forClass(AccountToken.class);
+        verify(tokenRepository).save(tokenCaptor.capture());
+        assertThat(tokenCaptor.getValue().getPurpose()).isEqualTo(AccountTokenPurpose.PASSWORD_RESET);
+        verify(eventPublisher).publishEvent(any(AccountMailEvent.class));
+    }
+
+    @Test
     void resendVerification_duringCooldownDoesNotCreateOrSendAnotherToken() {
         User user = new User("member", "member@example.nl", "hash");
         AccountToken recent = token(user, AccountTokenPurpose.EMAIL_VERIFICATION,
@@ -169,6 +194,35 @@ class AccountTokenServiceTest {
         assertThat(token.isUsed()).isTrue();
         verify(sessionRepository).deleteById("session-1");
         verify(sessionRepository).deleteById("session-2");
+    }
+
+    @Test
+    void resetPassword_rejectsExpiredAndUsedTokens() {
+        User user = new User("member", "member@example.nl", "old-hash");
+        AccountToken expired = token(user, AccountTokenPurpose.PASSWORD_RESET,
+                NOW.minusSeconds(1));
+        when(tokenRepository.findByTokenHashAndPurpose(
+                hash("expired-reset"), AccountTokenPurpose.PASSWORD_RESET))
+                .thenReturn(Optional.of(expired));
+
+        assertThatThrownBy(() -> service.resetPassword(new ResetPasswordRequestDto(
+                "expired-reset", "a-new-long-password")))
+                .isInstanceOf(InvalidAccountTokenException.class)
+                .hasMessage("De link is ongeldig of verlopen");
+
+        AccountToken used = token(user, AccountTokenPurpose.PASSWORD_RESET,
+                NOW.plusSeconds(60));
+        used.markUsed(LocalDateTime.ofInstant(NOW.minusSeconds(1), ZoneOffset.UTC));
+        when(tokenRepository.findByTokenHashAndPurpose(
+                hash("used-reset"), AccountTokenPurpose.PASSWORD_RESET))
+                .thenReturn(Optional.of(used));
+
+        assertThatThrownBy(() -> service.resetPassword(new ResetPasswordRequestDto(
+                "used-reset", "a-new-long-password")))
+                .isInstanceOf(InvalidAccountTokenException.class)
+                .hasMessage("De link is al gebruikt");
+        assertThat(user.getPassword()).isEqualTo("old-hash");
+        verifyNoInteractions(sessionRepository);
     }
 
     private AccountToken token(User user, AccountTokenPurpose purpose, Instant expiresAt) {

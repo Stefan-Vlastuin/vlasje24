@@ -32,9 +32,11 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -90,6 +92,18 @@ class CommentServiceTest {
     }
 
     @Test
+    void suspendedAccountCannotCreateComment() {
+        User suspendedUser = user(10, UserRole.USER, true);
+        when(suspendedUser.isActive()).thenReturn(false);
+        when(userRepository.findById(10)).thenReturn(Optional.of(suspendedUser));
+
+        assertThatThrownBy(() -> commentService.createComment(7, 10, "Hallo"))
+                .isInstanceOf(CommentAccessDeniedException.class);
+        verify(commentRepository, never()).save(any());
+        verifyNoInteractions(rateLimiter);
+    }
+
+    @Test
     void createCommentTrimsBodyAndChecksRateLimit() {
         User author = user(10, UserRole.USER, true);
         ChartWeek week = mock(ChartWeek.class);
@@ -142,6 +156,34 @@ class CommentServiceTest {
         verify(comment).softDelete(true);
         verify(moderationAuditRepository).save(any());
         verify(commentRepository, never()).delete(any());
+    }
+
+    @Test
+    void ownerCanSoftDeleteOwnCommentWithoutModerationAudit() {
+        User owner = user(10, UserRole.USER, true);
+        Comment comment = comment(1L, owner);
+        when(userRepository.findById(10)).thenReturn(Optional.of(owner));
+        when(commentRepository.findById(1L)).thenReturn(Optional.of(comment));
+
+        commentService.deleteComment(1L, 10);
+
+        verify(comment).softDelete(false);
+        verifyNoInteractions(moderationAuditRepository);
+        verify(commentRepository, never()).delete(any());
+    }
+
+    @Test
+    void regularUserCannotDeleteSomeoneElsesComment() {
+        User actor = user(10, UserRole.USER, true);
+        Comment comment = comment(1L, user(11, UserRole.USER, true));
+        when(userRepository.findById(10)).thenReturn(Optional.of(actor));
+        when(commentRepository.findById(1L)).thenReturn(Optional.of(comment));
+
+        assertThatThrownBy(() -> commentService.deleteComment(1L, 10))
+                .isInstanceOf(CommentAccessDeniedException.class);
+
+        verify(comment, never()).softDelete(anyBoolean());
+        verifyNoInteractions(moderationAuditRepository);
     }
 
     private User user(int id, UserRole role, boolean verified) {

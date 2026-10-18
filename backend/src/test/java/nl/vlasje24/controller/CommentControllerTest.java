@@ -28,6 +28,8 @@ import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -88,6 +90,40 @@ class CommentControllerTest {
                         .content(objectMapper.writeValueAsString(Map.of("body", "   "))))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.fieldErrors.body").exists());
+
+        verifyNoInteractions(commentService);
+    }
+
+    @Test
+    void authenticatedAccountCanEditComment() throws Exception {
+        when(commentService.editComment(1L, 42, "Gewijzigd")).thenReturn(comment());
+
+        mockMvc.perform(patch("/api/v1/comments/1")
+                        .with(csrf())
+                        .with(authentication(authenticationFor(42)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("body", "Gewijzigd"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.commentId").value(1));
+
+        verify(commentService).editComment(1L, 42, "Gewijzigd");
+    }
+
+    @Test
+    void authenticatedAccountCanDeleteComment() throws Exception {
+        mockMvc.perform(delete("/api/v1/comments/1")
+                        .with(csrf())
+                        .with(authentication(authenticationFor(42))))
+                .andExpect(status().isNoContent());
+
+        verify(commentService).deleteComment(1L, 42);
+    }
+
+    @Test
+    void deleteRequiresCsrfToken() throws Exception {
+        mockMvc.perform(delete("/api/v1/comments/1")
+                        .with(authentication(authenticationFor(42))))
+                .andExpect(status().isForbidden());
 
         verifyNoInteractions(commentService);
     }
