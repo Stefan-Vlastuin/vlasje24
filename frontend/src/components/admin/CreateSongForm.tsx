@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
 import { api } from '../../api/client'
-import { useAuth } from '../../hooks/useAuth'
 import type { ArtistDto } from '../../types/api'
 
 export function CreateSongForm() {
@@ -13,7 +12,6 @@ export function CreateSongForm() {
   const [status, setStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [loading, setLoading] = useState(false)
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const { getToken } = useAuth()
 
   useEffect(() => {
     if (artistSearch.length < 2) {
@@ -58,7 +56,6 @@ export function CreateSongForm() {
     try {
       const res = await api.createSong(
         { title, imageUrl, previewUrl, artistIds: selectedArtists.map(a => a.artistId) },
-        getToken()!,
       )
       setStatus({ type: 'success', message: `Nummer aangemaakt met ID ${res.id}` })
       setTitle('')

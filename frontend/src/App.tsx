@@ -7,6 +7,14 @@ import { TopSongsPage } from './pages/TopSongsPage'
 import { TopArtistsPage } from './pages/TopArtistsPage'
 import { LoginPage } from './pages/LoginPage'
 import { AdminPage } from './pages/AdminPage'
+import { AccountLoginPage } from './pages/AccountLoginPage'
+import { RegisterPage } from './pages/RegisterPage'
+import { VerifyEmailPage } from './pages/VerifyEmailPage'
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
+import { ResetPasswordPage } from './pages/ResetPasswordPage'
+import { AccountPage } from './pages/AccountPage'
+import { PrivacyPage } from './pages/PrivacyPage'
+import { HouseRulesPage } from './pages/HouseRulesPage'
 import { AudioPlayerContext, useAudioPlayerState } from './hooks/useAudioPlayer'
 
 export default function App() {
@@ -27,6 +35,15 @@ export default function App() {
                 <Route path="/artist/:artistId" element={<ArtistPage />} />
                 <Route path="/songs" element={<TopSongsPage />} />
                 <Route path="/artists" element={<TopArtistsPage />} />
+                <Route path="/login" element={<AccountLoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                <Route path="/verify-email" element={<VerifyEmailPage />} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
+                <Route path="/account" element={<AccountPage />} />
+                <Route path="/privacy" element={<PrivacyPage />} />
+                <Route path="/huisregels" element={<HouseRulesPage />} />
+                <Route path="*" element={<Navigate to="/chart/latest" replace />} />
               </Routes>
             </AppShell>
           }

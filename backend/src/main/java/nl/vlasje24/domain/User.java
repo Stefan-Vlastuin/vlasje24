@@ -4,6 +4,11 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.Locale;
+import java.util.Objects;
+
 @Entity
 @Table(name = "user")
 @Getter
@@ -20,4 +25,96 @@ public class User {
 
     @Column(nullable = false)
     private String password;
+
+    @Column(length = 254, unique = true)
+    private String email;
+
+    @Column(name = "email_verified_at")
+    private LocalDateTime emailVerifiedAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private UserRole role;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private UserStatus status;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
+    public User(String username, String email, String password) {
+        this.username = normalizeUsername(username);
+        this.email = normalizeEmail(email);
+        this.password = Objects.requireNonNull(password, "password must not be null");
+        this.role = UserRole.USER;
+        this.status = UserStatus.ACTIVE;
+    }
+
+    public boolean isEmailVerified() {
+        return emailVerifiedAt != null;
+    }
+
+    public boolean isActive() {
+        return status == UserStatus.ACTIVE;
+    }
+
+    public void verifyEmail(LocalDateTime verifiedAt) {
+        if (emailVerifiedAt == null) {
+            emailVerifiedAt = Objects.requireNonNull(verifiedAt);
+        }
+    }
+
+    public void changePassword(String encodedPassword) {
+        password = Objects.requireNonNull(encodedPassword);
+    }
+
+    public void suspend() {
+        status = UserStatus.SUSPENDED;
+    }
+
+    public void reactivate() {
+        status = UserStatus.ACTIVE;
+    }
+
+    public void deleteAccount(String anonymousUsername, String unusableEncodedPassword) {
+        if (userId == null) {
+            throw new IllegalStateException("Alleen een opgeslagen account kan worden verwijderd");
+        }
+        username = Objects.requireNonNull(anonymousUsername);
+        email = null;
+        emailVerifiedAt = null;
+        password = Objects.requireNonNull(unusableEncodedPassword);
+        status = UserStatus.DELETED;
+    }
+
+    @PrePersist
+    void initializeTimestamps() {
+        LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
+        if (createdAt == null) {
+            createdAt = now;
+        }
+        if (updatedAt == null) {
+            updatedAt = now;
+        }
+    }
+
+    @PreUpdate
+    void updateTimestamp() {
+        updatedAt = LocalDateTime.now(ZoneOffset.UTC);
+    }
+
+    private static String normalizeUsername(String username) {
+        return Objects.requireNonNull(username, "username must not be null").trim();
+    }
+
+    private static String normalizeEmail(String email) {
+        if (email == null) {
+            return null;
+        }
+        return email.trim().toLowerCase(Locale.ROOT);
+    }
 }

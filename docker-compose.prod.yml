@@ -1,5 +1,19 @@
 services:
 
+  phpmyadmin:
+    image: phpmyadmin:5.2.3-apache
+    container_name: vlasje24-phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      PMA_AUTH_TYPE: cookie
+      PMA_ABSOLUTE_URI: https://pma.${DOMAIN}/
+      UPLOAD_LIMIT: 64M
+    depends_on:
+      db:
+        condition: service_healthy
+
   caddy:
     image: caddy:2-alpine
     container_name: vlasje24-caddy
@@ -16,6 +30,7 @@ services:
       DOMAIN: ${DOMAIN}
     depends_on:
       - frontend
+      - phpmyadmin
 
 volumes:
   caddy_data:

@@ -1,46 +1,51 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth'
+import { useState } from 'react'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { useAuth } from '../auth/AuthContext'
 import { CreateArtistForm } from '../components/admin/CreateArtistForm'
 import { CreateSongForm } from '../components/admin/CreateSongForm'
 import { CreateChartForm } from '../components/admin/CreateChartForm'
+import { AdminModerationPanel } from '../components/admin/AdminModerationPanel'
 
-type Tab = 'artist' | 'song' | 'chart'
+type Tab = 'artist' | 'song' | 'chart' | 'moderation'
 
 export function AdminPage() {
   const [tab, setTab] = useState<Tab>('artist')
-  const { isAuthenticated, logout } = useAuth()
+  const { account, isLoading, logout } = useAuth()
   const navigate = useNavigate()
-  const authenticated = isAuthenticated()
 
-  useEffect(() => {
-    if (!authenticated) navigate('/admin/login', { replace: true })
-  }, [])
+  if (isLoading) return <div className="min-h-screen bg-gray-50" />
+  if (!account) return <Navigate to="/admin/login" replace />
+  if (account.role !== 'ADMIN') return <Navigate to="/account" replace />
 
-  if (!authenticated) return null
-
-  function handleLogout() {
-    logout()
-    navigate('/admin/login', { replace: true })
+  async function handleLogout() {
+    try {
+      await logout()
+    } catch {
+      // AuthProvider removes the local account state even if the request fails.
+    } finally {
+      navigate('/admin/login', { replace: true })
+    }
   }
 
   const tabs: { key: Tab; label: string }[] = [
     { key: 'artist', label: 'Artiest toevoegen' },
     { key: 'song', label: 'Nummer toevoegen' },
     { key: 'chart', label: 'Chart toevoegen' },
+    { key: 'moderation', label: 'Moderatie' },
   ]
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-blue-600 text-white px-6 py-4 flex items-center justify-between">
-        <h1 className="text-xl font-bold">Vlasje24 Beheer</h1>
-        <button onClick={handleLogout} className="text-blue-100 hover:text-white text-sm">
-          Uitloggen
-        </button>
+      <div className="bg-blue-600 text-white px-6 py-4 flex items-center justify-between gap-4">
+        <Link to="/chart/latest" className="text-xl font-bold hover:text-blue-100">Vlasje24 Beheer</Link>
+        <div className="flex items-center gap-4 text-sm">
+          <Link to="/account" className="text-blue-100 hover:text-white">{account.username}</Link>
+          <button onClick={handleLogout} className="text-blue-100 hover:text-white">Uitloggen</button>
+        </div>
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        <div className="flex gap-2 mb-6">
+      <div className="max-w-5xl mx-auto px-4 py-8">
+        <div className="flex flex-wrap gap-2 mb-6">
           {tabs.map(t => (
             <button
               key={t.key}
@@ -60,6 +65,7 @@ export function AdminPage() {
           {tab === 'artist' && <CreateArtistForm />}
           {tab === 'song' && <CreateSongForm />}
           {tab === 'chart' && <CreateChartForm />}
+          {tab === 'moderation' && <AdminModerationPanel />}
         </div>
       </div>
     </div>

@@ -5,6 +5,7 @@ spring:
     password: root
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
+    open-in-view: false
     hibernate:
       ddl-auto: validate
     show-sql: false
@@ -12,12 +13,63 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
+  flyway:
+    baseline-on-migrate: ${FLYWAY_BASELINE_ON_MIGRATE:false}
+    baseline-version: 1
+  session:
+    timeout: ${SESSION_TIMEOUT:14d}
+    jdbc:
+      initialize-schema: never
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_SMTP_AUTH:false}
+          starttls:
+            enable: ${MAIL_STARTTLS_ENABLE:false}
+            required: ${MAIL_STARTTLS_REQUIRED:false}
+    test-connection: false
   jackson:
+    deserialization:
+      fail-on-unknown-properties: true
     serialization:
       write-dates-as-timestamps: false
 
 server:
   port: 8080
+  forward-headers-strategy: framework
+  error:
+    include-message: never
+    include-stacktrace: never
+  tomcat:
+    max-http-form-post-size: 64KB
+    max-swallow-size: 64KB
+  servlet:
+    session:
+      cookie:
+        name: VLASJE24_SESSION
+        http-only: true
+        secure: ${SESSION_COOKIE_SECURE:false}
+        same-site: lax
+        max-age: ${SESSION_TIMEOUT:14d}
 
-jwt:
-  secret: ${JWT_SECRET:vlasje24-local-dev-secret-not-for-production-use-only}
+app:
+  base-url: ${APP_BASE_URL:http://localhost:5173}
+  mail:
+    from: ${MAIL_FROM:Vlasje24 <accounts@vlasje24.local>}
+    reply-to: ${MAIL_REPLY_TO:developer@vlasje24.local}
+  account-token:
+    verification-validity: ${VERIFICATION_TOKEN_VALIDITY:24h}
+    reset-validity: ${RESET_TOKEN_VALIDITY:60m}
+    request-cooldown: ${ACCOUNT_MAIL_COOLDOWN:1m}
+    cleanup-retention: ${ACCOUNT_TOKEN_CLEANUP_RETENTION:7d}
+  data-retention:
+    deleted-comments: 90d
+    moderation-audit: 365d
+    cleanup-cron: "0 30 3 * * *"
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost,https://vlasje24.nl,https://new.vlasje24.nl}

@@ -2,6 +2,8 @@
 
 Een Nederlandse muziekchartswebsite. Wekelijks worden 24 nummers ingevoerd via een admin-panel; bezoekers kunnen de hitlijst bekijken, door de geschiedenis navigeren, artiesten en nummers opzoeken en statistieken bekijken.
 
+Plan voor de komende gebruikersfunctionaliteit: [gebruikersaccounts en reacties](docs/accounts-en-reacties-plan.md).
+
 ## Inhoudsopgave
 
 - [Architectuur](#architectuur)
@@ -12,6 +14,7 @@ Een Nederlandse muziekchartswebsite. Wekelijks worden 24 nummers ingevoerd via e
 - [Omgevingsvariabelen](#omgevingsvariabelen)
 - [API-overzicht](#api-overzicht)
 - [Databaseschema](#databaseschema)
+- [Databasemigraties](#databasemigraties)
 - [Tests draaien](#tests-draaien)
 
 ---
@@ -36,10 +39,10 @@ Browser
 | Laag | Technologie | Poort (dev) |
 |---|---|---|
 | Frontend | React 18 + Vite + TailwindCSS | 80 (nginx) / 5173 (Vite dev) |
-| Backend | Spring Boot 3.4 / Java 21 | 8080 |
+| Backend | Spring Boot 4.1 / Java 21 | 8080 |
 | Database | MySQL 8.0 | 3306 |
 | Reverse proxy | Caddy v2 (productie) | 80 / 443 |
-| DB-beheer | phpMyAdmin | 8081 |
+| DB-beheer | phpMyAdmin 5.2.3 | 8081 lokaal / HTTPS-subdomein in productie |
 
 De frontend maakt alle API-calls naar het pad `/api/v1/...` (relatief). In productie proxyt nginx dit naar de backend-container; in Vite-dev-mode handelt de Vite-proxy (`vite.config.ts`) dit af.
 
@@ -53,7 +56,7 @@ De frontend maakt alle API-calls naar het pad `/api/v1/...` (relatief). In produ
 Voor native ontwikkeling (optioneel):
 - Java 21
 - Maven 3.9+
-- Node.js 20+
+- Node.js 24+
 
 ---
 
@@ -82,6 +85,7 @@ docker compose up --build
 | Website | http://localhost |
 | Backend API | http://localhost:8080/api/v1 |
 | phpMyAdmin | http://localhost:8081 |
+| Mailpit | http://localhost:8025 |
 
 ### 3. Starten zonder Docker (native)
 
@@ -111,7 +115,9 @@ Website beschikbaar op http://localhost:5173. De Vite-proxy stuurt `/api/*` door
 - Poorten 80 en 443 open in de firewall
 - DNS A-records:
   - `jouwdomein.nl` → server-IP
-  - `pma.jouwdomein.nl` → server-IP (voor phpMyAdmin via HTTPS)
+  - `pma.jouwdomein.nl` → server-IP
+
+De database en backend worden niet rechtstreeks op productie gepubliceerd. phpMyAdmin is uitsluitend bereikbaar via `https://pma.jouwdomein.nl` achter Caddy HTTPS en gebruikt zijn eigen cookie-login met de MySQL-inloggegevens.
 
 ### Stap 1 — Images bouwen en pushen (lokaal)
 
@@ -152,7 +158,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
 ## Admin-account aanmaken
 
-Er is geen registratie-UI. Een account wordt direct in de database aangemaakt. Het wachtwoord moet als BCrypt-hash worden opgeslagen.
+Gewone gebruikers kunnen zich registreren via `/register`. Een adminaccount wordt bewust direct in de database aangemaakt. Het wachtwoord moet als BCrypt-hash worden opgeslagen.
 
 ### Hash genereren
 
@@ -170,8 +176,15 @@ htpasswd -bnBC 10 "" jouwwachtwoord | tr -d ':\n'
 ### Gebruiker invoegen (via phpMyAdmin of MySQL CLI)
 
 ```sql
-INSERT INTO user (username, password)
-VALUES ('admin', '$2a$10$...hier-de-gegenereerde-hash...');
+INSERT INTO user (username, password, email, email_verified_at, role, status)
+VALUES (
+  'admin',
+  '$2a$10$...hier-de-gegenereerde-hash...',
+  'admin@example.nl',
+  UTC_TIMESTAMP(6),
+  'ADMIN',
+  'ACTIVE'
+);
 ```
 
 > De hash begint altijd met `$2a$10$` en is 60 tekens lang.
@@ -186,7 +199,15 @@ Kopieer `.env.example` naar `.env` en vul alle waarden in.
 |---|---|
 | `MYSQL_ROOT_PASSWORD` | MySQL root-wachtwoord (alleen voor DB-initialisatie) |
 | `MYSQL_APP_PASSWORD` | Wachtwoord voor de app-gebruiker `vlasje24_app` |
-| `JWT_SECRET` | Signing-secret voor JWT-tokens (minimaal 32 tekens) |
+| `FLYWAY_BASELINE_ON_MIGRATE` | Alleen eenmalig `true` bij de eerste Flyway-deploy op een bestaande database; normaal `false` |
+| `SESSION_TIMEOUT` | Geldigheidsduur van een inactieve sessie; standaard `14d` |
+| `SESSION_COOKIE_SECURE` | In productie `true`; lokale Docker-ontwikkeling zet dit op `false` voor HTTP |
+| `CORS_ALLOWED_ORIGINS` | Expliciete, kommagescheiden frontend-origins die cookies mogen meesturen |
+| `MAIL_HOST` / `MAIL_PORT` | SMTP-server; in productie Brevo, lokaal automatisch Mailpit |
+| `MAIL_USERNAME` / `MAIL_PASSWORD` | SMTP-inloggegevens; alleen in de VPS-`.env` invullen |
+| `MAIL_FROM` | Publieke afzender, standaard `accounts@vlasje24.nl` |
+| `MAIL_REPLY_TO` | Bestaand adres waarop gebruikers kunnen antwoorden |
+| `APP_BASE_URL` | Publieke URL voor verificatie- en resetlinks |
 | `DOMAIN` | Productiedomein zonder `https://` (bijv. `vlasje24.nl`) |
 | `DOCKER_USERNAME` | Docker Hub gebruikersnaam (voor push/pull) |
 
@@ -194,7 +215,7 @@ Kopieer `.env.example` naar `.env` en vul alle waarden in.
 
 ## API-overzicht
 
-Alle endpoints beginnen met `/api/v1`. Endpoints zonder auth zijn publiek leesbaar; admin-endpoints vereisen een `Authorization: Bearer <token>` header.
+Alle endpoints beginnen met `/api/v1`. Publieke data is zonder account leesbaar. Authenticatie gebruikt een server-side sessie in MySQL en een Secure/HttpOnly/SameSite=Lax-cookie. De frontend haalt via `GET /auth/csrf` een CSRF-token op en stuurt dat bij mutaties als `X-XSRF-TOKEN`; de meegeleverde API-client handelt dit automatisch af.
 
 ### Publieke endpoints
 
@@ -202,23 +223,59 @@ Alle endpoints beginnen met `/api/v1`. Endpoints zonder auth zijn publiek leesba
 |---|---|---|
 | GET | `/charts/latest` | Meest recente chart |
 | GET | `/charts/{weekId}` | Specifieke chartweek |
+| GET | `/charts/{weekId}/comments?page=0&size=20` | Zichtbare reacties, nieuwste eerst (maximaal 50 per pagina) |
 | GET | `/charts/years` | Lijst van jaren met chartdata |
 | GET | `/songs/{songId}` | Nummerdetails + charthistorie |
 | GET | `/songs/top?sort=points&page=0` | Top-nummers (sort: `points`, `weeks`, `position`) |
 | GET | `/artists/{artistId}` | Artiestdetails + nummers |
 | GET | `/artists/top?sort=points&page=0` | Top-artiesten (sort: `points`, `hits`) |
 | GET | `/search?q=query` | Zoek nummers + artiesten (max 5 elk) |
+| GET | `/auth/csrf` | Initialiseer CSRF-bescherming voor mutaties |
+| POST | `/auth/register` | Maak een ongeverifieerd USER-account aan |
+| POST | `/auth/login` | Log in met gebruikersnaam of e-mailadres en start een sessie |
+| POST | `/auth/verify-email` | Verbruik een verificatietoken |
+| POST | `/auth/resend-verification` | Vraag opnieuw een verificatiemail aan |
+| POST | `/auth/forgot-password` | Vraag een wachtwoordreset aan; antwoord verraadt geen accountbestaan |
+| POST | `/auth/reset-password` | Verbruik een resettoken en beëindig bestaande sessies |
 
 Optionele query-param: `year=2024` om te filteren op jaar.
 
-### Admin-endpoints (JWT vereist)
+Registratie verstuurt lokaal een verificatiemail naar Mailpit. De accountfrontend gebruikt `/register`, `/login`, `/account`, `/verify-email`, `/forgot-password` en `/reset-password`; links in de mails wijzen rechtstreeks naar de juiste pagina.
+
+De publieke routes `/privacy` en `/huisregels` beschrijven de minimale privacy-informatie en gedragsregels. Controleer vóór lancering of de contactmogelijkheid en verwerkersafspraken bij de werkelijke productie-inrichting passen.
+
+### Sessie-endpoints
+
+| Method | Pad | Omschrijving |
+|---|---|---|
+| GET | `/auth/me` | Geef de ingelogde veilige account-DTO terug |
+| POST | `/auth/logout` | Vernietig de huidige sessie |
+| DELETE | `/auth/account` | Verwijder het eigen account na wachtwoordbevestiging; anonimiseert gegevens en reacties en beëindigt sessies |
+
+### Reactie-endpoints (ingelogd en geverifieerd)
+
+| Method | Pad | Omschrijving |
+|---|---|---|
+| POST | `/charts/{weekId}/comments` | Plaats een plattetekstreactie van maximaal 1.000 tekens |
+| PATCH | `/comments/{commentId}` | Bewerk een eigen reactie; admins mogen iedere reactie beheren |
+| DELETE | `/comments/{commentId}` | Verwijder een reactie met soft-delete |
+
+Plaatsen is per gebruiker begrensd op 5 reacties per minuut en 30 per uur. Lezen blijft publiek.
+
+### Admin-endpoints (`ADMIN`-rol vereist)
 
 | Method | Pad | Body |
 |---|---|---|
-| POST | `/auth/login` | `{ "username": "...", "password": "..." }` |
 | POST | `/admin/artists` | `{ "name": "..." }` |
 | POST | `/admin/songs` | `{ "title", "imageUrl", "previewUrl", "artistIds": [1, 2] }` |
 | POST | `/admin/charts` | `{ "date": "2024-01-01", "songIds": [1..24] }` (exact 24 nummers) |
+| GET | `/admin/comments?status=ALL&page=0&size=20` | Recente zichtbare en verwijderde reacties (`ALL`, `VISIBLE`, `DELETED`) |
+| DELETE | `/admin/comments/{commentId}` | Soft-delete met optionele `{ "reason": "..." }` |
+| GET | `/admin/users?query=&page=0&size=20` | Accounts zoeken en pagineren |
+| PATCH | `/admin/users/{userId}/suspension` | `{ "suspended": true, "reason": "..." }`; sessies worden bij blokkeren beëindigd |
+| GET | `/admin/moderation-audit?page=0&size=20` | Interne auditlog van moderatieacties |
+
+Het beheeronderdeel **Moderatie** biedt dezelfde functies via de frontend. Interne redenen zijn maximaal 500 tekens en worden nooit publiek getoond. Adminaccounts kunnen niet vanuit dit scherm worden geblokkeerd.
 
 ---
 
@@ -230,12 +287,46 @@ song         (song_id PK, title, image_url, preview_url)
 artist       (artist_id PK, name)
 artist_of_song (song_id FK, artist_id FK, artist_order) — PK(song_id, artist_id)
 chart        (week_id FK, position, song_id FK) — PK(week_id, position)
-user         (user_id PK, username UNIQUE, password)
+user         (user_id PK, username UNIQUE, password, email UNIQUE, role, status, verificatie/timestamps)
+account_token (tokenhash, doel, verloop-/verbruikstijd en FK naar user)
+comment      (chartweek/auteur-FK, platte tekst, status en timestamps)
+moderation_audit (admin, actie, doel, optionele interne reden en tijdstip)
+SPRING_SESSION + SPRING_SESSION_ATTRIBUTES (server-side browsersessies)
 ```
 
 De tabel `date` bevat chartsweken; `chart` bevat de 24 posities per week. Punten worden berekend als `25 - positie` (positie 1 = 24 punten, positie 24 = 1 punt).
 
-Schema wordt aangemaakt via `db/init.sql` bij eerste DB-start. Hibernate valideert het schema bij elke opstart (`ddl-auto: validate`).
+Flyway maakt en migreert het schema bij het starten van de backend. Hibernate valideert het resultaat daarna (`ddl-auto: validate`).
+
+Verwijderde reacties worden automatisch na 90 dagen opgeruimd en moderatie-auditregels na één jaar. Verlopen of gebruikte accounttokens worden na zeven dagen opgeruimd. De operationele stappen voor back-ups en Brevo staan in [`docs/productiechecklist-accounts.md`](docs/productiechecklist-accounts.md).
+
+---
+
+## Databasemigraties
+
+Migraties staan in `backend/src/main/resources/db/migration` en hebben namen zoals:
+
+```text
+V1__initial_schema.sql
+V2__expand_user_accounts.sql
+V3__create_spring_session_tables.sql
+V4__create_account_tokens.sql
+V5__create_chart_comments.sql
+V6__create_moderation_audit.sql
+V7__apply_data_retention.sql
+```
+
+Wijzig een toegepaste migratie nooit; voeg voor iedere wijziging een nieuwe versie toe.
+
+### Eenmalige overstap van een bestaande database
+
+Maak eerst een databaseback-up en start de eerste Flyway-versie van de backend eenmalig met:
+
+```dotenv
+FLYWAY_BASELINE_ON_MIGRATE=true
+```
+
+Flyway registreert het bestaande schema dan als versie 1. Controleer na de start de tabel `flyway_schema_history` en zet de variabele daarna terug op `false`. Voer de Flyway-introductie bij voorkeur uit als aparte deploy zonder andere schemawijzigingen.
 
 ---
 
@@ -246,4 +337,6 @@ cd backend
 mvn test
 ```
 
-De tests draaien zonder echte database (datasource-autoconfiguratie is uitgesloten in `src/test/resources/application.yml`). Er zijn 7 testklassen met in totaal 33 tests.
+De unit- en weblaagtests draaien zonder externe database. Repository-, migratie- en
+sessie-integratietests starten via Testcontainers een tijdelijke MySQL 8-database;
+daarvoor moet Docker beschikbaar zijn.

@@ -12,7 +12,6 @@ services:
       MYSQL_PASSWORD: ${MYSQL_APP_PASSWORD}
     volumes:
       - db_data:/var/lib/mysql
-      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD}"]
       interval: 10s
@@ -28,20 +27,21 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/vlasje24?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: vlasje24_app
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_APP_PASSWORD}
-      JWT_SECRET: ${JWT_SECRET}
+      FLYWAY_BASELINE_ON_MIGRATE: ${FLYWAY_BASELINE_ON_MIGRATE:-false}
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-true}
+      SESSION_TIMEOUT: ${SESSION_TIMEOUT:-14d}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-https://vlasje24.nl,https://new.vlasje24.nl}
+      MAIL_HOST: ${MAIL_HOST:-smtp-relay.brevo.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_SMTP_AUTH: ${MAIL_SMTP_AUTH:-true}
+      MAIL_STARTTLS_ENABLE: ${MAIL_STARTTLS_ENABLE:-true}
+      MAIL_STARTTLS_REQUIRED: ${MAIL_STARTTLS_REQUIRED:-true}
+      MAIL_FROM: ${MAIL_FROM:-Vlasje24 <accounts@vlasje24.nl>}
+      MAIL_REPLY_TO: ${MAIL_REPLY_TO:-}
+      APP_BASE_URL: ${APP_BASE_URL:-https://vlasje24.nl}
       JAVA_TOOL_OPTIONS: "-Xmx256m -Xms128m"
-    depends_on:
-      db:
-        condition: service_healthy
-
-  phpmyadmin:
-    image: phpmyadmin:latest
-    container_name: vlasje24-phpmyadmin
-    restart: unless-stopped
-    environment:
-      PMA_HOST: db
-      PMA_PORT: 3306
-      PMA_AUTH_TYPE: cookie
     depends_on:
       db:
         condition: service_healthy

@@ -1,33 +1,96 @@
-import type { ArtistDetailDto, ChartDto, CreatedDto, SearchResultDto, SongDetailDto, TopArtistsPageDto, TopSongsPageDto } from '../types/api'
+import type { AccountDto, AdminCommentPageDto, AdminUserDto, AdminUserPageDto, ArtistDetailDto, ChartDto, CommentDto, CommentPageDto, CreatedDto, ModerationAuditPageDto, SearchResultDto, SongDetailDto, TopArtistsPageDto, TopSongsPageDto } from '../types/api'
 
 const BASE_URL = '/api/v1'
 
-async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`)
-  if (!res.ok) {
-    throw new Error(`HTTP ${res.status}: ${res.statusText}`)
-  }
-  return res.json() as Promise<T>
+interface ErrorResponse {
+  code?: string
+  message?: string
+  fieldErrors?: Record<string, string>
 }
 
-async function post<T>(path: string, body: unknown, token?: string): Promise<T> {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (token) headers['Authorization'] = `Bearer ${token}`
-  const res = await fetch(`${BASE_URL}${path}`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(body),
-  })
-  if (!res.ok) {
-    const text = await res.text()
-    throw new Error(text || `HTTP ${res.status}: ${res.statusText}`)
+export class ApiError extends Error {
+  constructor(
+    public readonly status: number,
+    public readonly code: string,
+    message: string,
+    public readonly fieldErrors: Record<string, string> = {},
+  ) {
+    super(message)
   }
-  return res.json() as Promise<T>
+}
+
+async function parseResponse<T>(res: Response): Promise<T> {
+  if (res.ok) {
+    const body = await res.text()
+    return (body ? JSON.parse(body) : undefined) as T
+  }
+
+  let error: ErrorResponse = {}
+  try {
+    error = await res.json() as ErrorResponse
+  } catch {
+    // An upstream proxy can return a non-JSON error page.
+  }
+  throw new ApiError(
+    res.status,
+    error.code ?? 'HTTP_ERROR',
+    error.message ?? `HTTP ${res.status}: ${res.statusText}`,
+    error.fieldErrors,
+  )
+}
+
+async function get<T>(path: string): Promise<T> {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    credentials: 'include',
+  })
+  return parseResponse<T>(res)
+}
+
+function readCookie(name: string): string | null {
+  const prefix = `${name}=`
+  const cookie = document.cookie.split('; ').find(value => value.startsWith(prefix))
+  return cookie ? decodeURIComponent(cookie.substring(prefix.length)) : null
+}
+
+let pendingCsrfToken: Promise<string> | null = null
+
+async function csrfToken(): Promise<string> {
+  const cookieToken = readCookie('XSRF-TOKEN')
+  if (cookieToken) return cookieToken
+  if (!pendingCsrfToken) {
+    pendingCsrfToken = get<{ token: string }>('/auth/csrf')
+      .then(response => response.token)
+      .finally(() => { pendingCsrfToken = null })
+  }
+  return pendingCsrfToken
+}
+
+async function mutate<T>(method: 'POST' | 'PATCH' | 'DELETE', path: string, body?: unknown): Promise<T> {
+  const headers: Record<string, string> = {
+    'X-XSRF-TOKEN': await csrfToken(),
+  }
+  if (body !== undefined) headers['Content-Type'] = 'application/json'
+
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method,
+    headers,
+    credentials: 'include',
+    body: body === undefined ? undefined : JSON.stringify(body),
+  })
+  return parseResponse<T>(res)
 }
 
 export const api = {
   getLatestChart: () => get<ChartDto>('/charts/latest'),
   getChart: (weekId: number) => get<ChartDto>(`/charts/${weekId}`),
+  getComments: (weekId: number, page: number, size = 20) =>
+    get<CommentPageDto>(`/charts/${weekId}/comments?page=${page}&size=${size}`),
+  createComment: (weekId: number, body: string) =>
+    mutate<CommentDto>('POST', `/charts/${weekId}/comments`, { body }),
+  editComment: (commentId: number, body: string) =>
+    mutate<CommentDto>('PATCH', `/comments/${commentId}`, { body }),
+  deleteComment: (commentId: number) =>
+    mutate<void>('DELETE', `/comments/${commentId}`),
   getSong: (songId: number) => get<SongDetailDto>(`/songs/${songId}`),
   getArtist: (artistId: number) => get<ArtistDetailDto>(`/artists/${artistId}`),
   search: (q: string) => get<SearchResultDto>(`/search?q=${encodeURIComponent(q)}`),
@@ -43,11 +106,37 @@ export const api = {
     return get<TopArtistsPageDto>(`/artists/top?${params}`)
   },
   login: (username: string, password: string) =>
-    post<{ token: string }>('/auth/login', { username, password }),
-  createArtist: (name: string, token: string) =>
-    post<CreatedDto>('/admin/artists', { name }, token),
-  createSong: (data: { title: string; imageUrl: string; previewUrl: string; artistIds: number[] }, token: string) =>
-    post<CreatedDto>('/admin/songs', data, token),
-  createChart: (data: { date: string; songIds: number[] }, token: string) =>
-    post<CreatedDto>('/admin/charts', data, token),
+    mutate<AccountDto>('POST', '/auth/login', { username, password }),
+  register: (data: { username: string; email: string; password: string }) =>
+    mutate<AccountDto>('POST', '/auth/register', data),
+  verifyEmail: (token: string) =>
+    mutate<void>('POST', '/auth/verify-email', { token }),
+  resendVerification: (email: string) =>
+    mutate<void>('POST', '/auth/resend-verification', { email }),
+  forgotPassword: (email: string) =>
+    mutate<void>('POST', '/auth/forgot-password', { email }),
+  resetPassword: (token: string, password: string) =>
+    mutate<void>('POST', '/auth/reset-password', { token, password }),
+  getCurrentAccount: () => get<AccountDto>('/auth/me'),
+  logout: () => mutate<void>('POST', '/auth/logout'),
+  deleteAccount: (password: string) =>
+    mutate<void>('DELETE', '/auth/account', { password }),
+  createArtist: (name: string) =>
+    mutate<CreatedDto>('POST', '/admin/artists', { name }),
+  createSong: (data: { title: string; imageUrl: string; previewUrl: string; artistIds: number[] }) =>
+    mutate<CreatedDto>('POST', '/admin/songs', data),
+  createChart: (data: { date: string; songIds: number[] }) =>
+    mutate<CreatedDto>('POST', '/admin/charts', data),
+  getAdminComments: (status: 'ALL' | 'VISIBLE' | 'DELETED', page: number, size = 20) =>
+    get<AdminCommentPageDto>(`/admin/comments?status=${status}&page=${page}&size=${size}`),
+  moderateComment: (commentId: number, reason: string) =>
+    mutate<void>('DELETE', `/admin/comments/${commentId}`, { reason }),
+  getAdminUsers: (query: string, page: number, size = 20) => {
+    const params = new URLSearchParams({ query, page: String(page), size: String(size) })
+    return get<AdminUserPageDto>(`/admin/users?${params}`)
+  },
+  updateUserSuspension: (userId: number, suspended: boolean, reason: string) =>
+    mutate<AdminUserDto>('PATCH', `/admin/users/${userId}/suspension`, { suspended, reason }),
+  getModerationAudit: (page: number, size = 20) =>
+    get<ModerationAuditPageDto>(`/admin/moderation-audit?page=${page}&size=${size}`),
 }

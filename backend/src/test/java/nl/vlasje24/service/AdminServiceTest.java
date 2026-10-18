@@ -68,8 +68,8 @@ class AdminServiceTest {
         ArgumentCaptor<ArtistOfSong> captor = ArgumentCaptor.forClass(ArtistOfSong.class);
         verify(artistOfSongRepository, times(2)).save(captor.capture());
         List<ArtistOfSong> saved = captor.getAllValues();
-        assertThat(saved.get(0).getArtistOrder()).isEqualTo((byte) 0);
-        assertThat(saved.get(1).getArtistOrder()).isEqualTo((byte) 1);
+        assertThat(saved.get(0).getArtistOrder()).isEqualTo((byte) 1);
+        assertThat(saved.get(1).getArtistOrder()).isEqualTo((byte) 2);
     }
 
     @Test
