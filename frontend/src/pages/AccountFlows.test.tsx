@@ -6,8 +6,16 @@ import { renderWithProviders } from '../test/test-utils'
 import { RegisterPage } from './RegisterPage'
 import { ResetPasswordPage } from './ResetPasswordPage'
 import { VerifyEmailPage } from './VerifyEmailPage'
+import { AccountPage } from './AccountPage'
+import type { AccountDto } from '../types/api'
 
-const auth = vi.hoisted(() => ({ refresh: vi.fn() }))
+const auth = vi.hoisted(() => ({
+  refresh: vi.fn(),
+  deleteAccount: vi.fn(),
+  account: null as AccountDto | null,
+  isLoading: false,
+  error: null as Error | null,
+}))
 
 vi.mock('../auth/AuthContext', () => ({
   useAuth: () => auth,
@@ -23,7 +31,13 @@ async function fillRegistration(passwordConfirmation = 'lang-wachtwoord') {
 }
 
 describe('accountflows', () => {
-  beforeEach(() => auth.refresh.mockReset())
+  beforeEach(() => {
+    auth.refresh.mockReset()
+    auth.deleteAccount.mockReset()
+    auth.account = null
+    auth.isLoading = false
+    auth.error = null
+  })
 
   it('houdt een registratie met verschillende wachtwoorden client-side tegen', async () => {
     const register = vi.spyOn(api, 'register')
@@ -34,6 +48,47 @@ describe('accountflows', () => {
 
     expect(screen.getByText('De wachtwoorden zijn niet hetzelfde.')).toBeInTheDocument()
     expect(register).not.toHaveBeenCalled()
+  })
+
+  it('stuurt de vrijwillige lijstmeldingvoorkeur mee bij registratie', async () => {
+    const register = vi.spyOn(api, 'register').mockResolvedValue({
+      userId: 42,
+      username: 'stefan',
+      role: 'USER',
+      emailVerified: false,
+      chartNotificationsEnabled: true,
+    })
+    renderWithProviders(<RegisterPage />)
+    const user = await fillRegistration()
+
+    await user.click(screen.getByRole('checkbox', { name: /nieuwe Vlasje24-lijst/ }))
+    await user.click(screen.getByRole('button', { name: 'Account maken' }))
+
+    expect(register).toHaveBeenCalledWith(expect.objectContaining({
+      chartNotificationsEnabled: true,
+    }))
+  })
+
+  it('laat een geverifieerde gebruiker lijstmeldingen aanzetten', async () => {
+    auth.account = {
+      userId: 42,
+      username: 'stefan',
+      role: 'USER',
+      emailVerified: true,
+      chartNotificationsEnabled: false,
+    }
+    const update = vi.spyOn(api, 'updateChartNotifications').mockResolvedValue({
+      ...auth.account,
+      chartNotificationsEnabled: true,
+    })
+    const user = userEvent.setup()
+    renderWithProviders(<AccountPage />, '/account')
+
+    await user.click(screen.getByRole('checkbox', { name: 'E-mail mij bij een nieuwe lijst' }))
+
+    expect(update).toHaveBeenCalledWith(true)
+    expect(await screen.findByText(/Je ontvangt voortaan/)).toBeInTheDocument()
+    expect(auth.refresh).toHaveBeenCalled()
   })
 
   it('toont veldfouten en een bestaand account uit de API', async () => {

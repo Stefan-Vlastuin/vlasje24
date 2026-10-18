@@ -7,13 +7,15 @@ public record AccountDto(
         Integer userId,
         String username,
         UserRole role,
-        boolean emailVerified
+        boolean emailVerified,
+        boolean chartNotificationsEnabled
 ) {
     public static AccountDto from(User user) {
         return new AccountDto(
                 user.getUserId(),
                 user.getUsername(),
                 user.getRole(),
-                user.isEmailVerified());
+                user.isEmailVerified(),
+                user.isChartNotificationsEnabled());
     }
 }

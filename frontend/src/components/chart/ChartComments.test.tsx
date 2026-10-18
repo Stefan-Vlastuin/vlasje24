@@ -20,6 +20,7 @@ const member: AccountDto = {
   username: 'stefan',
   role: 'USER',
   emailVerified: true,
+  chartNotificationsEnabled: false,
 }
 
 const comment: CommentDto = {

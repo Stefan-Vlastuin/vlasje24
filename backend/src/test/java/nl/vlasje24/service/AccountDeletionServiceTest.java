@@ -45,7 +45,8 @@ class AccountDeletionServiceTest {
 
     @Test
     void deleteAccount_anonymizesContentAndEndsSessions() {
-        User user = new User("member", "member@example.nl", passwordEncoder.encode("a-long-password"));
+        User user = new User(
+                "member", "member@example.nl", passwordEncoder.encode("a-long-password"), true);
         ReflectionTestUtils.setField(user, "userId", 42);
         Comment comment = mock(Comment.class);
         when(userRepository.findById(42)).thenReturn(Optional.of(user));
@@ -56,6 +57,7 @@ class AccountDeletionServiceTest {
 
         assertThat(user.getStatus()).isEqualTo(UserStatus.DELETED);
         assertThat(user.getEmail()).isNull();
+        assertThat(user.isChartNotificationsEnabled()).isFalse();
         assertThat(user.getUsername()).startsWith("verwijderd-42-");
         assertThat(passwordEncoder.matches("a-long-password", user.getPassword())).isFalse();
         verify(comment).removeForDeletedAccount();

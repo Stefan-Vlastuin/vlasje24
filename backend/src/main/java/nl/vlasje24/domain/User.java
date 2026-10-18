@@ -32,6 +32,9 @@ public class User {
     @Column(name = "email_verified_at")
     private LocalDateTime emailVerifiedAt;
 
+    @Column(name = "chart_notifications_enabled", nullable = false)
+    private boolean chartNotificationsEnabled;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private UserRole role;
@@ -47,9 +50,14 @@ public class User {
     private LocalDateTime updatedAt;
 
     public User(String username, String email, String password) {
+        this(username, email, password, false);
+    }
+
+    public User(String username, String email, String password, boolean chartNotificationsEnabled) {
         this.username = normalizeUsername(username);
         this.email = normalizeEmail(email);
         this.password = Objects.requireNonNull(password, "password must not be null");
+        this.chartNotificationsEnabled = chartNotificationsEnabled;
         this.role = UserRole.USER;
         this.status = UserStatus.ACTIVE;
     }
@@ -80,6 +88,10 @@ public class User {
         status = UserStatus.ACTIVE;
     }
 
+    public void setChartNotificationsEnabled(boolean enabled) {
+        chartNotificationsEnabled = enabled;
+    }
+
     public void deleteAccount(String anonymousUsername, String unusableEncodedPassword) {
         if (userId == null) {
             throw new IllegalStateException("Alleen een opgeslagen account kan worden verwijderd");
@@ -87,6 +99,7 @@ public class User {
         username = Objects.requireNonNull(anonymousUsername);
         email = null;
         emailVerifiedAt = null;
+        chartNotificationsEnabled = false;
         password = Objects.requireNonNull(unusableEncodedPassword);
         status = UserStatus.DELETED;
     }

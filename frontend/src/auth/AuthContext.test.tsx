@@ -12,6 +12,7 @@ const member: AccountDto = {
   username: 'stefan',
   role: 'USER',
   emailVerified: true,
+  chartNotificationsEnabled: false,
 }
 
 function AuthProbe() {

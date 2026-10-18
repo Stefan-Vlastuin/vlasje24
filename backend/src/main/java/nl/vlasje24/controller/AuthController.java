@@ -13,6 +13,7 @@ import nl.vlasje24.dto.LoginRequestDto;
 import nl.vlasje24.dto.RegisterRequestDto;
 import nl.vlasje24.dto.ResetPasswordRequestDto;
 import nl.vlasje24.dto.TokenRequestDto;
+import nl.vlasje24.dto.UpdateChartNotificationsRequestDto;
 import nl.vlasje24.exception.InvalidCredentialsException;
 import nl.vlasje24.security.AccountPrincipal;
 import nl.vlasje24.security.AuthRateLimiter;
@@ -31,6 +32,7 @@ import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -122,14 +124,21 @@ public class AuthController {
         SecurityContextHolder.setContext(context);
         securityContextRepository.saveContext(context, servletRequest, servletResponse);
 
-        return new AccountDto(
-                principal.userId(), principal.username(), principal.role(), principal.emailVerified());
+        return accountService.getAccount(principal.userId());
     }
 
     @GetMapping("/me")
     public AccountDto me(Authentication authentication) {
         AccountPrincipal principal = (AccountPrincipal) authentication.getPrincipal();
         return accountService.getAccount(principal.userId());
+    }
+
+    @PatchMapping("/chart-notifications")
+    public AccountDto updateChartNotifications(
+            @Valid @RequestBody UpdateChartNotificationsRequestDto request,
+            Authentication authentication) {
+        AccountPrincipal principal = (AccountPrincipal) authentication.getPrincipal();
+        return accountService.updateChartNotifications(principal.userId(), request.enabled());
     }
 
     @PostMapping("/logout")

@@ -5,7 +5,7 @@ import { useAuth } from '../auth/AuthContext'
 import { AccountPanel, FormError, FormSuccess, inputClass, primaryButtonClass } from '../components/account/AccountPanel'
 
 export function AccountPage() {
-  const { account, isLoading, error: authError, deleteAccount } = useAuth()
+  const { account, isLoading, error: authError, deleteAccount, refresh } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
@@ -15,6 +15,8 @@ export function AccountPage() {
   const [deletePassword, setDeletePassword] = useState('')
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [savingNotifications, setSavingNotifications] = useState(false)
+  const [notificationMessage, setNotificationMessage] = useState<string | null>(null)
 
   if (isLoading) return <AccountPanel title="Account"><p role="status" className="text-sm text-gray-600">Account laden…</p></AccountPanel>
   if (!account && !authError) return <Navigate to="/login" replace state={{ from: location.pathname }} />
@@ -54,6 +56,24 @@ export function AccountPage() {
     }
   }
 
+  async function updateNotifications(enabled: boolean) {
+    setSavingNotifications(true)
+    setNotificationMessage(null)
+    try {
+      await api.updateChartNotifications(enabled)
+      await refresh()
+      setNotificationMessage(enabled
+        ? 'Je ontvangt voortaan een e-mail bij een nieuwe lijst.'
+        : 'Je ontvangt geen e-mails meer bij nieuwe lijsten.')
+    } catch (caught) {
+      setNotificationMessage(caught instanceof ApiError
+        ? caught.message
+        : 'Je voorkeur kon niet worden opgeslagen. Probeer het later opnieuw.')
+    } finally {
+      setSavingNotifications(false)
+    }
+  }
+
   return (
     <AccountPanel title="Mijn account">
       <dl className="divide-y divide-gray-100 rounded-xl border border-gray-200">
@@ -75,6 +95,23 @@ export function AccountPage() {
           </form>
         </div>
       )}
+
+      <section className="mt-6 rounded-xl border border-gray-200 p-4" aria-labelledby="chart-notifications-heading">
+        <h2 id="chart-notifications-heading" className="font-semibold text-gray-900">Nieuwe lijst per e-mail</h2>
+        <p className="mt-1 text-sm leading-6 text-gray-600">Ontvang een bericht zodra een nieuwe Vlasje24-lijst online staat.</p>
+        <label className="mt-3 flex items-center gap-3 text-sm font-medium text-gray-800">
+          <input
+            type="checkbox"
+            checked={account.chartNotificationsEnabled}
+            disabled={(!account.emailVerified && !account.chartNotificationsEnabled) || savingNotifications}
+            onChange={event => void updateNotifications(event.target.checked)}
+            className="h-4 w-4 rounded border-gray-300"
+          />
+          E-mail mij bij een nieuwe lijst
+        </label>
+        {!account.emailVerified && <p className="mt-2 text-xs text-amber-700">Verifieer eerst je e-mailadres om deze melding aan te zetten.</p>}
+        {notificationMessage && <p role="status" className="mt-2 text-sm text-gray-600">{notificationMessage}</p>}
+      </section>
 
       {account.role === 'ADMIN' && <Link to="/admin" className="mt-6 block text-center font-medium text-blue-700 hover:underline">Naar beheer</Link>}
 
