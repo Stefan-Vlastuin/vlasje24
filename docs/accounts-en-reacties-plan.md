@@ -446,7 +446,7 @@ Geïmplementeerde details:
 Uitgevoerde hardening:
 
 - Caddy dwingt HTTPS af en voegt HSTS, CSP, clickjacking-, MIME- en privacyheaders toe;
-- phpMyAdmin heeft in productie geen hostpoort en is alleen via HTTPS bereikbaar, achter een extra Basic Auth-laag; lokaal bindt het uitsluitend aan `127.0.0.1`;
+- phpMyAdmin heeft in productie geen hostpoort, is alleen via HTTPS bereikbaar en gebruikt zijn eigen cookie-login; lokaal bindt het uitsluitend aan `127.0.0.1`;
 - nginx weigert requestbodies boven 64 KiB en de backend begrenst formulierrequests eveneens;
 - alle schrijf-DTO's hebben Jakarta Validation; zoek-, sorteer- en paginatieparameters zijn begrensd;
 - het backendimage draait als niet-rootgebruiker en frontenddependencies worden reproduceerbaar met `npm ci` geïnstalleerd;

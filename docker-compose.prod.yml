@@ -28,8 +28,6 @@ services:
       - caddy_config:/config
     environment:
       DOMAIN: ${DOMAIN}
-      PMA_BASIC_AUTH_USER: ${PMA_BASIC_AUTH_USER:?Vul PMA_BASIC_AUTH_USER in}
-      PMA_BASIC_AUTH_HASH: ${PMA_BASIC_AUTH_HASH:?Vul PMA_BASIC_AUTH_HASH in}
     depends_on:
       - frontend
       - phpmyadmin
