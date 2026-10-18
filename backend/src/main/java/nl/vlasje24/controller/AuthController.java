@@ -37,6 +37,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.nio.charset.StandardCharsets;
+
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
@@ -94,6 +96,9 @@ public class AuthController {
             HttpServletRequest servletRequest,
             HttpServletResponse servletResponse) {
         rateLimiter.checkLogin(servletRequest.getRemoteAddr());
+        if (request.password().getBytes(StandardCharsets.UTF_8).length > 72) {
+            throw new InvalidCredentialsException();
+        }
 
         Authentication authenticated;
         try {

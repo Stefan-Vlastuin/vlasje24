@@ -46,18 +46,6 @@ services:
       db:
         condition: service_healthy
 
-  phpmyadmin:
-    image: phpmyadmin:latest
-    container_name: vlasje24-phpmyadmin
-    restart: unless-stopped
-    environment:
-      PMA_HOST: db
-      PMA_PORT: 3306
-      PMA_AUTH_TYPE: cookie
-    depends_on:
-      db:
-        condition: service_healthy
-
   frontend:
     image: ${DOCKER_USERNAME}/vlasje24-frontend:latest
     container_name: vlasje24-frontend

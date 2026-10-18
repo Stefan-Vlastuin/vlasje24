@@ -33,16 +33,16 @@ Browser
   │                                     │
   │                               MySQL (database)
   │
-  └─ pma.domein.nl ──► Caddy ──► phpMyAdmin
+  └─ pma.domein.nl ──► Caddy + Basic Auth ──► phpMyAdmin
 ```
 
 | Laag | Technologie | Poort (dev) |
 |---|---|---|
 | Frontend | React 18 + Vite + TailwindCSS | 80 (nginx) / 5173 (Vite dev) |
-| Backend | Spring Boot 3.4 / Java 21 | 8080 |
+| Backend | Spring Boot 4.1 / Java 21 | 8080 |
 | Database | MySQL 8.0 | 3306 |
 | Reverse proxy | Caddy v2 (productie) | 80 / 443 |
-| DB-beheer | phpMyAdmin | 8081 |
+| DB-beheer | phpMyAdmin 5.2.3 | 8081 lokaal / HTTPS-subdomein in productie |
 
 De frontend maakt alle API-calls naar het pad `/api/v1/...` (relatief). In productie proxyt nginx dit naar de backend-container; in Vite-dev-mode handelt de Vite-proxy (`vite.config.ts`) dit af.
 
@@ -56,7 +56,7 @@ De frontend maakt alle API-calls naar het pad `/api/v1/...` (relatief). In produ
 Voor native ontwikkeling (optioneel):
 - Java 21
 - Maven 3.9+
-- Node.js 20+
+- Node.js 24+
 
 ---
 
@@ -115,7 +115,9 @@ Website beschikbaar op http://localhost:5173. De Vite-proxy stuurt `/api/*` door
 - Poorten 80 en 443 open in de firewall
 - DNS A-records:
   - `jouwdomein.nl` → server-IP
-  - `pma.jouwdomein.nl` → server-IP (voor phpMyAdmin via HTTPS)
+  - `pma.jouwdomein.nl` → server-IP
+
+De database en backend worden niet rechtstreeks op productie gepubliceerd. phpMyAdmin is uitsluitend bereikbaar via `https://pma.jouwdomein.nl`, achter Caddy HTTPS en een extra Basic Auth-laag. Gebruik voor die laag andere inloggegevens dan voor MySQL.
 
 ### Stap 1 — Images bouwen en pushen (lokaal)
 
@@ -130,6 +132,12 @@ docker compose -f docker-compose.yml -f docker-compose.build.yml push
 # Op de server: kopieer .env.example naar .env en vul in
 cp .env.example .env
 nano .env
+```
+
+Genereer de phpMyAdmin Basic Auth-hash interactief en zet het resultaat tussen enkele quotes bij `PMA_BASIC_AUTH_HASH` (zo blijven de `$`-tekens intact):
+
+```bash
+docker run --rm -it caddy:2-alpine caddy hash-password
 ```
 
 ### Stap 3 — Opstarten op de server
@@ -204,6 +212,7 @@ Kopieer `.env.example` naar `.env` en vul alle waarden in.
 | `MAIL_HOST` / `MAIL_PORT` | SMTP-server; in productie Brevo, lokaal automatisch Mailpit |
 | `MAIL_USERNAME` / `MAIL_PASSWORD` | SMTP-inloggegevens; alleen in de VPS-`.env` invullen |
 | `MAIL_FROM` | Publieke afzender, standaard `accounts@vlasje24.nl` |
+| `PMA_BASIC_AUTH_USER` / `PMA_BASIC_AUTH_HASH` | Extra toegangsslot vóór productie-phpMyAdmin; gebruik andere gegevens dan voor MySQL |
 | `MAIL_REPLY_TO` | Bestaand adres waarop gebruikers kunnen antwoorden |
 | `APP_BASE_URL` | Publieke URL voor verificatie- en resetlinks |
 | `DOMAIN` | Productiedomein zonder `https://` (bijv. `vlasje24.nl`) |

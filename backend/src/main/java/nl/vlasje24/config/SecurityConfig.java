@@ -20,11 +20,14 @@ import org.springframework.security.web.context.HttpSessionSecurityContextReposi
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.session.web.http.CookieSerializer;
+import org.springframework.session.web.http.DefaultCookieSerializer;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 
@@ -84,8 +87,8 @@ public class SecurityConfig {
     public DaoAuthenticationProvider authenticationProvider(
             AppUserDetailsService userDetailsService,
             PasswordEncoder passwordEncoder) {
-        var provider = new DaoAuthenticationProvider(passwordEncoder);
-        provider.setUserDetailsService(userDetailsService);
+        var provider = new DaoAuthenticationProvider(userDetailsService);
+        provider.setPasswordEncoder(passwordEncoder);
         return provider;
     }
 
@@ -108,6 +111,21 @@ public class SecurityConfig {
                 .sameSite("Lax")
                 .secure(secureCookie));
         return repository;
+    }
+
+    @Bean
+    public CookieSerializer sessionCookieSerializer(
+            @Value("${server.servlet.session.cookie.name:VLASJE24_SESSION}") String cookieName,
+            @Value("${server.servlet.session.cookie.secure:false}") boolean secureCookie,
+            @Value("${server.servlet.session.cookie.max-age:14d}") Duration maxAge) {
+        var serializer = new DefaultCookieSerializer();
+        serializer.setCookieName(cookieName);
+        serializer.setCookiePath("/");
+        serializer.setUseHttpOnlyCookie(true);
+        serializer.setUseSecureCookie(secureCookie);
+        serializer.setSameSite("Lax");
+        serializer.setCookieMaxAge(Math.toIntExact(maxAge.toSeconds()));
+        return serializer;
     }
 
     @Bean

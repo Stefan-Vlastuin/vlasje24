@@ -1,7 +1,7 @@
 package nl.vlasje24.security;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import nl.vlasje24.domain.User;
 import nl.vlasje24.domain.UserStatus;
 import nl.vlasje24.repository.UserRepository;
@@ -9,17 +9,17 @@ import nl.vlasje24.service.AdminModerationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
-import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.mysql.MySQLContainer;
 
 import java.util.Map;
 
@@ -44,7 +44,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class SessionAuthenticationIntegrationTest {
 
     @Container
-    static final MySQLContainer<?> mysql = new MySQLContainer<>("mysql:8.0");
+    static final MySQLContainer mysql = new MySQLContainer("mysql:8.0");
 
     @DynamicPropertySource
     static void configureDatabase(DynamicPropertyRegistry registry) {

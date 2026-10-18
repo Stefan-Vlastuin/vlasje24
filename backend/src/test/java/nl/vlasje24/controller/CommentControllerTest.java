@@ -1,6 +1,6 @@
 package nl.vlasje24.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import nl.vlasje24.config.SecurityConfig;
 import nl.vlasje24.domain.UserRole;
 import nl.vlasje24.dto.CommentDto;
@@ -11,11 +11,11 @@ import nl.vlasje24.security.AppUserDetailsService;
 import nl.vlasje24.service.CommentService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
@@ -39,8 +39,8 @@ class CommentControllerTest {
     @Autowired MockMvc mockMvc;
     @Autowired ObjectMapper objectMapper;
 
-    @MockBean CommentService commentService;
-    @MockBean UserRepository userRepository;
+    @MockitoBean CommentService commentService;
+    @MockitoBean UserRepository userRepository;
 
     @Test
     void commentsArePublicAndPaginated() throws Exception {

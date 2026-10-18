@@ -22,14 +22,15 @@ public class SearchService {
 
     @Transactional(readOnly = true)
     public SearchResultDto search(String query) {
+        String normalizedQuery = query.trim();
         List<SongDto> songs = songRepository
-                .searchByTitle(query, PageRequest.of(0, 5))
+                .searchByTitle(normalizedQuery, PageRequest.of(0, 5))
                 .stream()
                 .map(songService::toSongDto)
                 .toList();
 
         List<ArtistDto> artists = artistRepository
-                .findByNameContainingIgnoreCase(query, PageRequest.of(0, 5))
+                .findByNameContainingIgnoreCase(normalizedQuery, PageRequest.of(0, 5))
                 .stream()
                 .map(a -> new ArtistDto(a.getArtistId(), a.getName()))
                 .toList();

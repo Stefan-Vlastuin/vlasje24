@@ -79,7 +79,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<Map<String, Object>> handleConstraintViolation(ConstraintViolationException ex) {
-        return error(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "Ongeldige paginering");
+        return error(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "Ongeldige aanvraag");
     }
 
     @ExceptionHandler(InvalidAccountTokenException.class)

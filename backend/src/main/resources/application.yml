@@ -5,6 +5,7 @@ spring:
     password: root
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
+    open-in-view: false
     hibernate:
       ddl-auto: validate
     show-sql: false
@@ -33,12 +34,20 @@ spring:
             required: ${MAIL_STARTTLS_REQUIRED:false}
     test-connection: false
   jackson:
+    deserialization:
+      fail-on-unknown-properties: true
     serialization:
       write-dates-as-timestamps: false
 
 server:
   port: 8080
   forward-headers-strategy: framework
+  error:
+    include-message: never
+    include-stacktrace: never
+  tomcat:
+    max-http-form-post-size: 64KB
+    max-swallow-size: 64KB
   servlet:
     session:
       cookie:

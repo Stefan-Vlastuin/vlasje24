@@ -1,6 +1,6 @@
 package nl.vlasje24.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import nl.vlasje24.config.SecurityConfig;
 import nl.vlasje24.domain.UserRole;
 import nl.vlasje24.dto.AdminCommentPageDto;
@@ -11,11 +11,11 @@ import nl.vlasje24.service.AdminModerationService;
 import nl.vlasje24.service.AdminService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -39,9 +39,9 @@ class AdminControllerTest {
     @Autowired MockMvc mockMvc;
     @Autowired ObjectMapper objectMapper;
 
-    @MockBean AdminService adminService;
-    @MockBean AdminModerationService moderationService;
-    @MockBean AppUserDetailsService appUserDetailsService;
+    @MockitoBean AdminService adminService;
+    @MockitoBean AdminModerationService moderationService;
+    @MockitoBean AppUserDetailsService appUserDetailsService;
 
     @Test
     void createArtist_unauthenticated_returns401() throws Exception {
@@ -66,6 +66,19 @@ class AdminControllerTest {
     }
 
     @Test
+    void createArtist_blankNameIsRejectedBeforeService() throws Exception {
+        mockMvc.perform(post("/api/v1/admin/artists")
+                        .with(user("admin").roles("ADMIN"))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("name", "   "))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors.name").exists());
+
+        verifyNoInteractions(adminService);
+    }
+
+    @Test
     void createSong_authenticated_returns201WithId() throws Exception {
         when(adminService.createSong(any())).thenReturn(10);
 
@@ -82,6 +95,20 @@ class AdminControllerTest {
                         .content(objectMapper.writeValueAsString(body)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(10));
+    }
+
+    @Test
+    void createSong_withoutArtistsIsRejectedBeforeService() throws Exception {
+        mockMvc.perform(post("/api/v1/admin/songs")
+                        .with(user("admin").roles("ADMIN"))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "title", "Hello", "artistIds", List.of()))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors.artistIds").exists());
+
+        verifyNoInteractions(adminService);
     }
 
     @Test

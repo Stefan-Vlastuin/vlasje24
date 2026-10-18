@@ -9,7 +9,7 @@ public record ResetPasswordRequestDto(
         String token,
 
         @NotBlank(message = "Wachtwoord is verplicht")
-        @Size(min = 12, message = "Wachtwoord moet minimaal 12 tekens bevatten")
+        @Size(min = 12, max = 72, message = "Wachtwoord moet 12 tot 72 tekens bevatten")
         String password
 ) {
 }

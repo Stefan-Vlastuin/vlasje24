@@ -51,7 +51,7 @@ De gratis limiet van Brevo is op de datum van dit document 300 e-mails per dag e
 
 ### Techniek en hosting
 
-- Backend: Java 21, Spring Boot 3.4.4, Spring Web, JPA en Spring Security.
+- Backend: Java 21, Spring Boot 4.1, Spring Web MVC, JPA en Spring Security.
 - Frontend: React 18, TypeScript, Vite, React Router en TanStack Query.
 - Database: MySQL 8.
 - Productie: Docker Compose op een STRATO-VPS, met Caddy voor TLS en nginx voor de frontend/API-proxy.
@@ -428,6 +428,8 @@ Geïmplementeerde details:
 
 ## 8. Security-checklist
 
+**Status: technisch gecontroleerd en aangescherpt. Operationele back-ups blijven een deployvoorwaarde.**
+
 - Gebruik HTTPS overal in productie; Caddy verzorgt dit al.
 - Geen wachtwoorden, SMTP-credentials, sessie-id's of tokens in Git of logs.
 - BCrypt blijft de `PasswordEncoder`; overweeg een hogere cost alleen na een performancetest op de VPS.
@@ -440,6 +442,18 @@ Geïmplementeerde details:
 - Accepteer alleen verwachte sorteer-/paginatieparameters en begrens paginagrootte.
 - Vernietig sessies na wachtwoordreset, accountblokkering en accountverwijdering.
 - Maak databaseback-up vóór iedere productiemigratie en test migraties eerst op een kopie.
+
+Uitgevoerde hardening:
+
+- Caddy dwingt HTTPS af en voegt HSTS, CSP, clickjacking-, MIME- en privacyheaders toe;
+- phpMyAdmin heeft in productie geen hostpoort en is alleen via HTTPS bereikbaar, achter een extra Basic Auth-laag; lokaal bindt het uitsluitend aan `127.0.0.1`;
+- nginx weigert requestbodies boven 64 KiB en de backend begrenst formulierrequests eveneens;
+- alle schrijf-DTO's hebben Jakarta Validation; zoek-, sorteer- en paginatieparameters zijn begrensd;
+- het backendimage draait als niet-rootgebruiker en frontenddependencies worden reproduceerbaar met `npm ci` geïnstalleerd;
+- de build gebruikt ondersteunde baselines: Spring Boot 4.1 en Node.js 24;
+- foutresponses tonen geen stacktraces of interne foutmeldingen;
+- de repository is gecontroleerd op ingecheckte geheimen en HTML-injectie; reacties blijven uitsluitend React-tekstnodes;
+- sessie-intrekking, CSRF, rollen/eigenaarschap en eenmalige gehashte accounttokens zijn met de backendtests gecontroleerd.
 
 ## 9. Teststrategie
 

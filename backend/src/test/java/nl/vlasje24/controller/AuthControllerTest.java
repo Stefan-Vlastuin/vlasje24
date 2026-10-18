@@ -1,6 +1,6 @@
 package nl.vlasje24.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import nl.vlasje24.config.SecurityConfig;
 import nl.vlasje24.domain.User;
 import nl.vlasje24.domain.UserRole;
@@ -13,12 +13,12 @@ import nl.vlasje24.service.AccountDeletionService;
 import nl.vlasje24.service.AccountTokenService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.mock.web.MockHttpSession;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Map;
@@ -43,11 +43,11 @@ class AuthControllerTest {
     @Autowired MockMvc mockMvc;
     @Autowired ObjectMapper objectMapper;
 
-    @MockBean UserRepository userRepository;
-    @MockBean AccountService accountService;
-    @MockBean AccountDeletionService accountDeletionService;
-    @MockBean AccountTokenService accountTokenService;
-    @MockBean AuthRateLimiter rateLimiter;
+    @MockitoBean UserRepository userRepository;
+    @MockitoBean AccountService accountService;
+    @MockitoBean AccountDeletionService accountDeletionService;
+    @MockitoBean AccountTokenService accountTokenService;
+    @MockitoBean AuthRateLimiter rateLimiter;
 
     private static final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
@@ -139,6 +139,20 @@ class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of("username", "admin", "password", "wrong"))))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void login_passwordAboveBcryptByteLimitReturnsGeneric401() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "username", "member",
+                                "password", "é".repeat(37)))))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("INVALID_CREDENTIALS"));
+
+        verifyNoInteractions(userRepository);
     }
 
     @Test

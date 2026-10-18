@@ -5,9 +5,9 @@ import org.flywaydb.core.api.MigrationVersion;
 import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
-import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.mysql.MySQLContainer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class UserAccountMigrationTest {
 
     @Container
-    static final MySQLContainer<?> mysql = new MySQLContainer<>("mysql:8.0");
+    static final MySQLContainer mysql = new MySQLContainer("mysql:8.0");
 
     @Test
     void migration_convertsLegacyAccountsAndUsesSafeDefaultsForNewAccounts() {

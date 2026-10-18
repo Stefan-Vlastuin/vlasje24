@@ -3,6 +3,7 @@ package nl.vlasje24.controller;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import nl.vlasje24.domain.AdminCommentFilter;
 import nl.vlasje24.dto.AdminCommentPageDto;
@@ -34,19 +35,19 @@ public class AdminController {
 
     @PostMapping("/artists")
     @ResponseStatus(HttpStatus.CREATED)
-    public CreatedDto createArtist(@RequestBody CreateArtistDto dto) {
+    public CreatedDto createArtist(@Valid @RequestBody CreateArtistDto dto) {
         return new CreatedDto(adminService.createArtist(dto));
     }
 
     @PostMapping("/songs")
     @ResponseStatus(HttpStatus.CREATED)
-    public CreatedDto createSong(@RequestBody CreateSongDto dto) {
+    public CreatedDto createSong(@Valid @RequestBody CreateSongDto dto) {
         return new CreatedDto(adminService.createSong(dto));
     }
 
     @PostMapping("/charts")
     @ResponseStatus(HttpStatus.CREATED)
-    public CreatedDto createChart(@RequestBody CreateChartDto dto) {
+    public CreatedDto createChart(@Valid @RequestBody CreateChartDto dto) {
         return new CreatedDto(adminService.createChart(dto));
     }
 
@@ -72,7 +73,7 @@ public class AdminController {
 
     @GetMapping("/users")
     public AdminUserPageDto getUsers(
-            @RequestParam(defaultValue = "") String query,
+            @RequestParam(defaultValue = "") @Size(max = 100) String query,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(50) int size) {
         return moderationService.getUsers(query, page, size);
