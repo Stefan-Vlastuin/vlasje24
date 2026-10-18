@@ -16,8 +16,10 @@ class AccountDtoTest {
         assertThat(dto.username()).isEqualTo("member");
         assertThat(dto.role()).isEqualTo(UserRole.USER);
         assertThat(dto.emailVerified()).isFalse();
+        assertThat(dto.chartNotificationsEnabled()).isFalse();
         assertThat(AccountDto.class.getRecordComponents())
                 .extracting(component -> component.getName())
-                .containsExactly("userId", "username", "role", "emailVerified");
+                .containsExactly("userId", "username", "role", "emailVerified",
+                        "chartNotificationsEnabled");
     }
 }

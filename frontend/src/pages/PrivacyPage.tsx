@@ -2,16 +2,16 @@ export function PrivacyPage() {
   return (
     <article className="mx-auto max-w-2xl rounded-xl bg-white p-6 shadow-sm">
       <h1 className="text-2xl font-bold text-gray-900">Privacy</h1>
-      <p className="mt-2 text-sm text-gray-500">Laatst bijgewerkt: 17 oktober 2026</p>
+      <p className="mt-2 text-sm text-gray-500">Laatst bijgewerkt: 18 oktober 2026</p>
 
       <div className="mt-6 space-y-5 text-sm leading-6 text-gray-700">
         <section>
           <h2 className="font-semibold text-gray-900">Welke gegevens worden verwerkt?</h2>
-          <p>Voor een account bewaart Vlasje24 je gebruikersnaam, e-mailadres, beveiligd wachtwoord, accountstatus en tijdstippen. Ook worden je reacties en noodzakelijke beveiligingsgegevens, zoals sessies en tijdelijke rate-limitgegevens, verwerkt.</p>
+          <p>Voor een account bewaart Vlasje24 je gebruikersnaam, e-mailadres, beveiligd wachtwoord, accountstatus, lijstmeldingsvoorkeur en tijdstippen. Ook worden je reacties en noodzakelijke beveiligingsgegevens, zoals sessies en tijdelijke rate-limitgegevens, verwerkt.</p>
         </section>
         <section>
           <h2 className="font-semibold text-gray-900">Waarom?</h2>
-          <p>Accountgegevens zijn nodig om de door jou gevraagde accountdienst uit te voeren. Beveiliging en moderatie gebeuren vanuit het gerechtvaardigde belang om de website veilig en bruikbaar te houden. Vlasje24 gebruikt geen advertentie- of trackingcookies.</p>
+          <p>Accountgegevens zijn nodig om de door jou gevraagde accountdienst uit te voeren. Als je daar zelf voor kiest, gebruikt Vlasje24 je e-mailadres ook om je te melden dat een nieuwe lijst online staat. Je kunt deze toestemming op ieder moment via je account intrekken. Beveiliging en moderatie gebeuren vanuit het gerechtvaardigde belang om de website veilig en bruikbaar te houden. Vlasje24 gebruikt geen advertentie- of trackingcookies.</p>
         </section>
         <section>
           <h2 className="font-semibold text-gray-900">E-mail en andere partijen</h2>

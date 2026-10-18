@@ -10,6 +10,7 @@ export function RegisterPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmation, setConfirmation] = useState('')
+  const [chartNotificationsEnabled, setChartNotificationsEnabled] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<Fields, string>>>({})
   const [error, setError] = useState<string | null>(null)
   const [registeredEmail, setRegisteredEmail] = useState<string | null>(null)
@@ -27,7 +28,7 @@ export function RegisterPage() {
 
     setLoading(true)
     try {
-      await api.register({ username, email, password })
+      await api.register({ username, email, password, chartNotificationsEnabled })
       setRegisteredEmail(email.trim())
       setPassword('')
       setConfirmation('')
@@ -96,6 +97,15 @@ export function RegisterPage() {
           <label htmlFor="register-confirmation" className="text-sm font-medium text-gray-700">Herhaal wachtwoord</label>
           <input id="register-confirmation" type="password" value={confirmation} onChange={event => setConfirmation(event.target.value)} required minLength={12} autoComplete="new-password" className={inputClass} />
         </div>
+        <label className="flex items-start gap-3 rounded-lg border border-gray-200 p-3 text-sm text-gray-700">
+          <input
+            type="checkbox"
+            checked={chartNotificationsEnabled}
+            onChange={event => setChartNotificationsEnabled(event.target.checked)}
+            className="mt-1 h-4 w-4 rounded border-gray-300"
+          />
+          <span>Stuur mij een e-mail wanneer een nieuwe Vlasje24-lijst wordt gepubliceerd. Je kunt dit altijd weer uitzetten via je account.</span>
+        </label>
         {error && <FormError>{error}</FormError>}
         <p className="text-xs leading-5 text-gray-500">Door een account te maken ga je akkoord met de <Link to="/huisregels" className="text-blue-700 hover:underline">huisregels</Link> en lees je hoe Vlasje24 je gegevens verwerkt in de <Link to="/privacy" className="text-blue-700 hover:underline">privacyverklaring</Link>.</p>
         <button type="submit" disabled={loading} className={primaryButtonClass}>{loading ? 'Account maken…' : 'Account maken'}</button>

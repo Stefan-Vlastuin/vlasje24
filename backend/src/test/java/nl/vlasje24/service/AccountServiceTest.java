@@ -37,7 +37,7 @@ class AccountServiceTest {
         when(userRepository.saveAndFlush(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         var result = accountService.register(new RegisterRequestDto(
-                "  member  ", "  Member@Example.nl  ", "a-long-password"));
+                "  member  ", "  Member@Example.nl  ", "a-long-password", true));
 
         ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
         verify(userRepository).saveAndFlush(captor.capture());
@@ -46,6 +46,7 @@ class AccountServiceTest {
         assertThat(saved.getEmail()).isEqualTo("member@example.nl");
         assertThat(passwordEncoder.matches("a-long-password", saved.getPassword())).isTrue();
         assertThat(saved.getRole()).isEqualTo(UserRole.USER);
+        assertThat(saved.isChartNotificationsEnabled()).isTrue();
         assertThat(result.emailVerified()).isFalse();
         verify(accountTokenService).issueInitialVerification(saved);
     }
@@ -55,7 +56,7 @@ class AccountServiceTest {
         when(userRepository.existsByUsername("member")).thenReturn(true);
 
         assertThatThrownBy(() -> accountService.register(new RegisterRequestDto(
-                "member", "member@example.nl", "a-long-password")))
+                "member", "member@example.nl", "a-long-password", false)))
                 .isInstanceOf(AccountAlreadyExistsException.class);
 
         verify(userRepository, never()).saveAndFlush(any());
@@ -66,7 +67,7 @@ class AccountServiceTest {
         String password = "é".repeat(37);
 
         assertThatThrownBy(() -> accountService.register(new RegisterRequestDto(
-                "member", "member@example.nl", password)))
+                "member", "member@example.nl", password, false)))
                 .isInstanceOf(InvalidAccountDataException.class);
 
         verifyNoInteractions(userRepository);
@@ -86,5 +87,28 @@ class AccountServiceTest {
 
         assertThat(result.userId()).isEqualTo(7);
         assertThat(result.emailVerified()).isTrue();
+    }
+
+    @Test
+    void updateChartNotifications_requiresVerifiedEmailWhenEnabling() {
+        User user = new User("member", "member@example.nl", "hash");
+        when(userRepository.findById(7)).thenReturn(java.util.Optional.of(user));
+
+        assertThatThrownBy(() -> accountService.updateChartNotifications(7, true))
+                .isInstanceOf(InvalidAccountDataException.class)
+                .hasMessageContaining("Verifieer");
+        assertThat(user.isChartNotificationsEnabled()).isFalse();
+    }
+
+    @Test
+    void updateChartNotifications_updatesVerifiedAccount() {
+        User user = new User("member", "member@example.nl", "hash");
+        user.verifyEmail(java.time.LocalDateTime.now());
+        when(userRepository.findById(7)).thenReturn(java.util.Optional.of(user));
+
+        var result = accountService.updateChartNotifications(7, true);
+
+        assertThat(result.chartNotificationsEnabled()).isTrue();
+        assertThat(user.isChartNotificationsEnabled()).isTrue();
     }
 }

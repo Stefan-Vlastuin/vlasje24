@@ -8,6 +8,7 @@ Voer deze korte checklist uit vóór publieke registratie en daarna maandelijks.
 - Doorloop registratie, verificatie, wachtwoordreset, accountverwijdering en adminmoderatie op productie.
 - Controleer in Brevo de daglimiet, mislukte afleveringen en bounces. Stel waar Brevo dat ondersteunt een melding in op het beheeradres.
 - Controleer SPF, DKIM en DMARC en zet open- en kliktracking voor accountmails uit.
+- Controleer vóór een publicatie of het aantal lijstabonnees binnen de dagelijkse verzendlimiet van de mailprovider past.
 - Draai `npm audit --omit=dev` en de backendtests. Beoordeel meldingen vóór deploy; update niet blind een major-versie.
 
 ## Bewaarbeleid

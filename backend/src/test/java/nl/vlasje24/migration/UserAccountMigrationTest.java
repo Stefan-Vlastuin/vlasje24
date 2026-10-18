@@ -56,6 +56,9 @@ class UserAccountMigrationTest {
         assertThat(jdbc.queryForObject(
                 "SELECT `status` FROM `user` WHERE `username` = 'regular-user'", String.class))
                 .isEqualTo("ACTIVE");
+        assertThat(jdbc.queryForObject(
+                "SELECT `chart_notifications_enabled` FROM `user` WHERE `username` = 'regular-user'",
+                Boolean.class)).isFalse();
 
         assertThat(jdbc.queryForObject(
                 "SELECT COUNT(*) FROM information_schema.tables " +

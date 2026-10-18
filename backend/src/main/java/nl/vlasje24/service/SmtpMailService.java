@@ -7,9 +7,16 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
+
 @Service
 @RequiredArgsConstructor
 public class SmtpMailService implements MailService {
+
+    private static final DateTimeFormatter DUTCH_DATE =
+            DateTimeFormatter.ofPattern("d MMMM uuuu", Locale.forLanguageTag("nl-NL"));
 
     private final JavaMailSender mailSender;
 
@@ -54,6 +61,27 @@ public class SmtpMailService implements MailService {
                 Groet,
                 Vlasje24
                 """.formatted(username, link));
+    }
+
+    @Override
+    public void sendChartPublished(
+            String recipient, String username, Integer weekId, LocalDate chartDate) {
+        String link = UriComponentsBuilder.fromUriString(appBaseUrl)
+                .path("/chart/{weekId}")
+                .buildAndExpand(weekId)
+                .toUriString();
+        send(recipient, "De nieuwe Vlasje24-lijst staat online", """
+                Hallo %s,
+
+                De Vlasje24-lijst van %s staat online.
+                Bekijk de nieuwe lijst: %s
+
+                Je ontvangt dit bericht omdat je lijstmeldingen hebt aangezet.
+                Je kunt deze meldingen uitschakelen via %s/account.
+
+                Groet,
+                Vlasje24
+                """.formatted(username, DUTCH_DATE.format(chartDate), link, appBaseUrl));
     }
 
     private String accountLink(String path, String rawToken) {

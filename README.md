@@ -203,7 +203,7 @@ Kopieer `.env.example` naar `.env` en vul alle waarden in.
 | `SESSION_TIMEOUT` | Geldigheidsduur van een inactieve sessie; standaard `14d` |
 | `SESSION_COOKIE_SECURE` | In productie `true`; lokale Docker-ontwikkeling zet dit op `false` voor HTTP |
 | `CORS_ALLOWED_ORIGINS` | Expliciete, kommagescheiden frontend-origins die cookies mogen meesturen |
-| `MAIL_HOST` / `MAIL_PORT` | SMTP-server; in productie Brevo, lokaal automatisch Mailpit |
+| `MAIL_HOST` / `MAIL_PORT` | SMTP-server voor account- en lijstmeldingen; in productie Brevo, lokaal automatisch Mailpit |
 | `MAIL_USERNAME` / `MAIL_PASSWORD` | SMTP-inloggegevens; alleen in de VPS-`.env` invullen |
 | `MAIL_FROM` | Publieke afzender, standaard `accounts@vlasje24.nl` |
 | `MAIL_REPLY_TO` | Bestaand adres waarop gebruikers kunnen antwoorden |
@@ -242,6 +242,8 @@ Optionele query-param: `year=2024` om te filteren op jaar.
 
 Registratie verstuurt lokaal een verificatiemail naar Mailpit. De accountfrontend gebruikt `/register`, `/login`, `/account`, `/verify-email`, `/forgot-password` en `/reset-password`; links in de mails wijzen rechtstreeks naar de juiste pagina.
 
+Bij registratie kan een gebruiker vrijwillig lijstmeldingen aanzetten. De voorkeur staat standaard uit en kan na e-mailverificatie via `/account` worden gewijzigd. Na een geslaagde publicatie worden actieve, geverifieerde abonnees afzonderlijk per e-mail naar de nieuwe lijst verwezen.
+
 De publieke routes `/privacy` en `/huisregels` beschrijven de minimale privacy-informatie en gedragsregels. Controleer vóór lancering of de contactmogelijkheid en verwerkersafspraken bij de werkelijke productie-inrichting passen.
 
 ### Sessie-endpoints
@@ -251,6 +253,7 @@ De publieke routes `/privacy` en `/huisregels` beschrijven de minimale privacy-i
 | GET | `/auth/me` | Geef de ingelogde veilige account-DTO terug |
 | POST | `/auth/logout` | Vernietig de huidige sessie |
 | DELETE | `/auth/account` | Verwijder het eigen account na wachtwoordbevestiging; anonimiseert gegevens en reacties en beëindigt sessies |
+| PATCH | `/auth/chart-notifications` | Zet de eigen e-mailmelding voor nieuwe lijsten aan of uit |
 
 ### Reactie-endpoints (ingelogd en geverifieerd)
 
@@ -287,7 +290,7 @@ song         (song_id PK, title, image_url, preview_url)
 artist       (artist_id PK, name)
 artist_of_song (song_id FK, artist_id FK, artist_order) — PK(song_id, artist_id)
 chart        (week_id FK, position, song_id FK) — PK(week_id, position)
-user         (user_id PK, username UNIQUE, password, email UNIQUE, role, status, verificatie/timestamps)
+user         (user_id PK, username UNIQUE, password, email UNIQUE, role, status, lijstmeldingsvoorkeur, verificatie/timestamps)
 account_token (tokenhash, doel, verloop-/verbruikstijd en FK naar user)
 comment      (chartweek/auteur-FK, platte tekst, status en timestamps)
 moderation_audit (admin, actie, doel, optionele interne reden en tijdstip)

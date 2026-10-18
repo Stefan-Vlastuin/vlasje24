@@ -87,6 +87,7 @@ export interface AccountDto {
   username: string
   role: 'USER' | 'ADMIN'
   emailVerified: boolean
+  chartNotificationsEnabled: boolean
 }
 
 export interface CommentDto {

@@ -18,7 +18,9 @@ public record RegisterRequestDto(
 
         @NotBlank(message = "Wachtwoord is verplicht")
         @Size(min = 12, max = 72, message = "Wachtwoord moet 12 tot 72 tekens bevatten")
-        String password
+        String password,
+
+        Boolean chartNotificationsEnabled
 ) {
     public RegisterRequestDto {
         if (username != null) {
@@ -26,6 +28,9 @@ public record RegisterRequestDto(
         }
         if (email != null) {
             email = email.trim();
+        }
+        if (chartNotificationsEnabled == null) {
+            chartNotificationsEnabled = false;
         }
     }
 }
