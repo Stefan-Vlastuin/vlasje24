@@ -520,15 +520,15 @@ Aanbevolen volgorde vanaf fase 3:
 
 Voor fase 2 is bewust geen expand-and-contract-overgang gebruikt: backend en frontend moeten samen worden uitgerold. Gebruik voor toekomstige destructieve schemawijzigingen wel expand-and-contract. Een Flyway-migratie wordt niet teruggedraaid door een oud image te starten. Bij een mislukte destructieve migratie is de databaseback-up de herstelroute.
 
-## 11. Nog expliciet te bevestigen vóór publieke lancering
+## 11. Bevestigde productkeuzes vóór publieke lancering
 
-Deze keuzes blokkeren het voorbereidende backendwerk niet, maar moeten vóór publieke lancering definitief zijn:
+Status: de productkeuzes zijn bevestigd. Alleen het concrete Reply-To-adres moet nog door de beheerder in de productieomgeving worden ingevuld en getest.
 
-- het concrete privé-e-mailadres dat in productie als Reply-To wordt ingesteld;
-- of de nu ingestelde sessieduur van 14 dagen later moet wijzigen;
-- mogen gebruikers hun reacties onbeperkt bewerken, of alleen binnen bijvoorbeeld 15 minuten;
-- exacte maximale reactielengte (advies: 1.000 tekens);
-- of een aparte `MODERATOR`-rol nodig wordt; advies voor de start: alleen `USER` en `ADMIN`.
+- sessies blijven 14 dagen geldig;
+- gebruikers mogen hun eigen reacties onbeperkt bewerken;
+- reacties zijn maximaal 1.000 tekens lang;
+- de eerste release gebruikt alleen de rollen `USER` en `ADMIN`; er komt geen aparte `MODERATOR`-rol;
+- vóór publieke lancering wordt een bestaand privé-e-mailadres als `MAIL_REPLY_TO` ingesteld. Dit adres wordt niet in de repository vastgelegd.
 
 ## 12. Definitie van de eerste complete release
 
