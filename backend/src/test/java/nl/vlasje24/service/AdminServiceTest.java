@@ -11,6 +11,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -29,6 +30,7 @@ class AdminServiceTest {
     @Mock ArtistOfSongRepository artistOfSongRepository;
     @Mock ChartWeekRepository chartWeekRepository;
     @Mock ChartEntryRepository chartEntryRepository;
+    @Mock ApplicationEventPublisher eventPublisher;
 
     @InjectMocks AdminService adminService;
 
@@ -106,6 +108,7 @@ class AdminServiceTest {
         List<ChartEntry> entries = captor.getAllValues();
         assertThat(entries.get(0).getId().getPosition()).isEqualTo(1);
         assertThat(entries.get(23).getId().getPosition()).isEqualTo(24);
+        verify(eventPublisher).publishEvent(any(ChartPublishedEvent.class));
     }
 
     @Test

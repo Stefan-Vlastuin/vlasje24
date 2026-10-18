@@ -68,7 +68,7 @@ class AuthControllerTest {
         when(user.isActive()).thenReturn(true);
         when(userRepository.findByUsername("admin")).thenReturn(Optional.of(user));
         when(accountService.getAccount(1)).thenReturn(
-                new AccountDto(1, "admin", UserRole.ADMIN, true));
+                new AccountDto(1, "admin", UserRole.ADMIN, true, false));
 
         var result = mockMvc.perform(post("/api/v1/auth/login")
                         .with(csrf())
@@ -86,7 +86,7 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.username").value("admin"))
                 .andExpect(jsonPath("$.emailVerified").value(true));
 
-        verify(accountService).getAccount(1);
+        verify(accountService, org.mockito.Mockito.times(2)).getAccount(1);
     }
 
     @Test
@@ -157,7 +157,7 @@ class AuthControllerTest {
 
     @Test
     void register_validRequest_returnsCreatedAccount() throws Exception {
-        var account = new AccountDto(42, "member", UserRole.USER, false);
+        var account = new AccountDto(42, "member", UserRole.USER, false, true);
         when(accountService.register(org.mockito.ArgumentMatchers.any())).thenReturn(account);
 
         mockMvc.perform(post("/api/v1/auth/register")
@@ -166,10 +166,12 @@ class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(Map.of(
                                 "username", "member",
                                 "email", "member@example.nl",
-                                "password", "long-password"))))
+                                "password", "long-password",
+                                "chartNotificationsEnabled", true))))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.userId").value(42))
-                .andExpect(jsonPath("$.emailVerified").value(false));
+                .andExpect(jsonPath("$.emailVerified").value(false))
+                .andExpect(jsonPath("$.chartNotificationsEnabled").value(true));
     }
 
     @Test
@@ -235,6 +237,27 @@ class AuthControllerTest {
     void me_withoutSession_returns401() throws Exception {
         mockMvc.perform(get("/api/v1/auth/me"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void updateChartNotifications_usesAuthenticatedAccount() throws Exception {
+        var principal = new nl.vlasje24.security.AccountPrincipal(
+                42, "member", null, UserRole.USER, true);
+        var authentication = org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+                .authenticated(principal, null, principal.getAuthorities());
+        when(accountService.updateChartNotifications(42, true)).thenReturn(
+                new AccountDto(42, "member", UserRole.USER, true, true));
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .patch("/api/v1/auth/chart-notifications")
+                        .with(csrf())
+                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication(authentication))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("enabled", true))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.chartNotificationsEnabled").value(true));
+
+        verify(accountService).updateChartNotifications(42, true);
     }
 
     @Test

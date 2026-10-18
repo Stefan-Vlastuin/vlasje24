@@ -107,7 +107,7 @@ export const api = {
   },
   login: (username: string, password: string) =>
     mutate<AccountDto>('POST', '/auth/login', { username, password }),
-  register: (data: { username: string; email: string; password: string }) =>
+  register: (data: { username: string; email: string; password: string; chartNotificationsEnabled: boolean }) =>
     mutate<AccountDto>('POST', '/auth/register', data),
   verifyEmail: (token: string) =>
     mutate<void>('POST', '/auth/verify-email', { token }),
@@ -118,6 +118,8 @@ export const api = {
   resetPassword: (token: string, password: string) =>
     mutate<void>('POST', '/auth/reset-password', { token, password }),
   getCurrentAccount: () => get<AccountDto>('/auth/me'),
+  updateChartNotifications: (enabled: boolean) =>
+    mutate<AccountDto>('PATCH', '/auth/chart-notifications', { enabled }),
   logout: () => mutate<void>('POST', '/auth/logout'),
   deleteAccount: (password: string) =>
     mutate<void>('DELETE', '/auth/account', { password }),

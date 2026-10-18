@@ -10,6 +10,8 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.LocalDate;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 
@@ -51,5 +53,20 @@ class SmtpMailServiceTest {
         verify(mailSender).send(captor.capture());
         assertThat(captor.getValue().getText()).contains(
                 "https://vlasje24.nl/reset-password?token=raw_token-123");
+    }
+
+    @Test
+    void chartPublishedMailContainsChartAndPreferenceLinks() {
+        service.sendChartPublished(
+                "member@example.nl", "member", 123, LocalDate.of(2026, 10, 18));
+
+        ArgumentCaptor<SimpleMailMessage> captor = ArgumentCaptor.forClass(SimpleMailMessage.class);
+        verify(mailSender).send(captor.capture());
+        SimpleMailMessage message = captor.getValue();
+        assertThat(message.getSubject()).isEqualTo("De nieuwe Vlasje24-lijst staat online");
+        assertThat(message.getText())
+                .contains("18 oktober 2026")
+                .contains("https://vlasje24.nl/chart/123")
+                .contains("https://vlasje24.nl/account");
     }
 }

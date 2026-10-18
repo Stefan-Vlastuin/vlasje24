@@ -47,12 +47,26 @@ public class AccountService {
 
         try {
             User user = userRepository.saveAndFlush(
-                    new User(username, email, passwordEncoder.encode(request.password())));
+                    new User(username, email, passwordEncoder.encode(request.password()),
+                            request.chartNotificationsEnabled()));
             accountTokenService.issueInitialVerification(user);
             return AccountDto.from(user);
         } catch (DataIntegrityViolationException exception) {
             // A concurrent registration can pass the pre-check; the database remains authoritative.
             throw new AccountAlreadyExistsException();
         }
+    }
+
+    @Transactional
+    public AccountDto updateChartNotifications(Integer userId, boolean enabled) {
+        User user = userRepository.findById(userId)
+                .filter(User::isActive)
+                .orElseThrow(InvalidCredentialsException::new);
+        if (enabled && !user.isEmailVerified()) {
+            throw new InvalidAccountDataException(
+                    "Verifieer eerst je e-mailadres om lijstmeldingen te ontvangen");
+        }
+        user.setChartNotificationsEnabled(enabled);
+        return AccountDto.from(user);
     }
 }

@@ -6,6 +6,7 @@ import nl.vlasje24.dto.CreateArtistDto;
 import nl.vlasje24.dto.CreateChartDto;
 import nl.vlasje24.dto.CreateSongDto;
 import nl.vlasje24.repository.*;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +21,7 @@ public class AdminService {
     private final ArtistOfSongRepository artistOfSongRepository;
     private final ChartWeekRepository chartWeekRepository;
     private final ChartEntryRepository chartEntryRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public Integer createArtist(CreateArtistDto dto) {
@@ -56,6 +58,9 @@ public class AdminService {
                     .orElseThrow(() -> new IllegalArgumentException("Nummer niet gevonden"));
             chartEntryRepository.save(new ChartEntry(chartWeek, song, i + 1));
         }
+
+        eventPublisher.publishEvent(new ChartPublishedEvent(
+                chartWeek.getWeekId(), chartWeek.getDate()));
 
         return chartWeek.getWeekId();
     }

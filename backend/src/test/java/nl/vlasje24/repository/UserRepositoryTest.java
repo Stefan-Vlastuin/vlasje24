@@ -14,6 +14,8 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.mysql.MySQLContainer;
 
+import java.time.LocalDateTime;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -70,5 +72,29 @@ class UserRepositoryTest {
         assertThatThrownBy(() ->
                 userRepository.saveAndFlush(new User("member-two", "MEMBER@example.nl", "hash")))
                 .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void chartNotificationRecipients_onlyReturnsActiveVerifiedSubscribers() {
+        User subscriber = new User("subscriber", "subscriber@example.nl", "hash", true);
+        subscriber.verifyEmail(LocalDateTime.now());
+        userRepository.save(subscriber);
+
+        User unverified = new User("unverified", "unverified@example.nl", "hash", true);
+        userRepository.save(unverified);
+
+        User optedOut = new User("opted-out", "opted-out@example.nl", "hash", false);
+        optedOut.verifyEmail(LocalDateTime.now());
+        userRepository.save(optedOut);
+
+        User suspended = new User("suspended", "suspended@example.nl", "hash", true);
+        suspended.verifyEmail(LocalDateTime.now());
+        suspended.suspend();
+        userRepository.saveAndFlush(suspended);
+
+        assertThat(userRepository
+                .findAllByStatusAndEmailVerifiedAtIsNotNullAndChartNotificationsEnabledTrue(
+                        UserStatus.ACTIVE))
+                .containsExactly(subscriber);
     }
 }
